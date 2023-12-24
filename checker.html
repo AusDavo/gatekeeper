@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+	<script src="https://cdn.jsdelivr.net/npm/bip32@1.0.2/index.js"></script>
 	<script src="checker.js"></script>
     <title>Bitcoin Multisignature Wallet Descriptor</title>
 </head>
@@ -12,5 +13,12 @@
     <br><br>
     <h2>Select a constituent xpub:</h2>
     <select id="xpubs"></select>
+
+	<input type="text" id="path" placeholder="Derivation Path">
+
+	<button onclick="calculatePublicKey()">Calculate Public Key</button>
+
+	<p id="public-key"></p>
+
 </body>
 </html>
