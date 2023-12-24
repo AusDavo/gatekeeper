@@ -1,97 +1,29 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>Cosigner Competency Checker</title>
+    <title>Bitcoin Multisignature Wallet Descriptor</title>
 </head>
 <body>
-	<h1>Cosigner Competency Checker</h1>
-	<form enctype="multipart/form-data" id="multisig-form">
-		<!-- Choose upload or paste option -->
-		<label>
-			<input type="radio" name="upload-type" value="upload" checked>
-			Upload configuration file
-		</label>
-		<label>
-			<input type="radio" name="upload-type" value="paste">
-			Paste configuration text
-		</label>
-		<br>
-	
-		<!-- File input for upload -->
-		<div id="file-upload" style="display: block;">
-			<label for="config-file">Upload your multisig configuration file:</label><br>
-			<input type="file" id="config-file" name="config-file"><br>
-		</div>
-	
-		<!-- Textarea for pasting -->
-		<div id="text-paste" style="display: none;">
-			<label for="config-text">Paste your multisig configuration:</label><br>
-			<textarea id="config-text" name="config-text" rows="4" cols="50"></textarea><br>
-		</div>
-	
-		<!-- Button to load configuration -->
-		<button type="button" onclick="loadConfiguration()">Load Configuration</button>
-		<br>
-	
-		<!-- Other form fields -->
-		<label for="xpubs">Select one of the xpubs for scrutiny:</label><br>
-		<select id="xpubs" name="xpubs">
-			<!-- Placeholder option, will be replaced dynamically -->
-			<option value="" disabled selected>Select xpub</option>
-		</select><br>
-	
-		<label for="random-string">Random string of characters:</label><br>
-		<input type="text" id="random-string" name="random-string" value="a1b2c3d4e5f6"><br>
-		<label for="derivation-path">Suitable derivation path:</label><br>
-		<input type="text" id="derivation-path" name="derivation-path" value="m/44'/0'/0'"><br>
-		<label for="signature">Signature:</label><br>
-		<input type="text" id="signature" name="signature"><br>
-		<button type="submit">Submit</button>
-	</form>
-	
-	<script>
-		function toggleConfigInput() {
-			var uploadType = document.querySelector('input[name="upload-type"]:checked').value;
-			document.getElementById('file-upload').style.display = (uploadType === 'upload') ? 'block' : 'none';
-			document.getElementById('text-paste').style.display = (uploadType === 'paste') ? 'block' : 'none';
-		}
-	
-		function loadConfiguration() {
-			// Extract xpubs from the configuration file or text
-			var xpubs = [];  // Replace this with actual logic to extract xpubs
-			// For example, assuming the xpubs are comma-separated in the config file
-			if (document.querySelector('input[name="upload-type"]:checked').value === 'upload') {
-				var configFileInput = document.getElementById('config-file');
-				// Replace with logic to parse the uploaded file content
-				var fileContent = "xpub1,xpub2,xpub3";  // Replace with actual file content
-				xpubs = fileContent.split(',');
-			} else {
-				// Replace with logic to parse the pasted text content
-				var textContent = document.getElementById('config-text').value;
-				xpubs = textContent.split(',');
-			}
-	
-			// Populate xpubs dropdown
-			var xpubsDropdown = document.getElementById('xpubs');
-			xpubsDropdown.innerHTML = "";
-			xpubs.forEach(function (xpub) {
-				var option = document.createElement('option');
-				option.value = xpub;
-				option.text = xpub;
-				xpubsDropdown.add(option);
-			});
-		}
-	
-		// Add event listeners for radio buttons
-		document.querySelectorAll('input[name="upload-type"]').forEach(function (radio) {
-			radio.addEventListener('change', function () {
-				toggleConfigInput();
-			});
-		});
-	
-		// Initial setup on page load
-		toggleConfigInput();
-	</script>
-	
+    <h2>Enter your multisignature wallet descriptor:</h2>
+    <textarea id="descriptor" rows="5" cols="50"></textarea>
+    <br><br>
+    <button onclick="loadConfiguration()">Load Configuration</button>
+    <br><br>
+    <h2>Select a constituent xpub:</h2>
+    <select id="xpubs"></select>
+    <script>
+        function loadConfiguration() {
+            const descriptor = document.getElementById("descriptor").value;
+            const regex = /(?<=xpub)\w+/g;
+            const xpubs = descriptor.match(regex).map(xpub => "xpub" + xpub);
+            const select = document.getElementById("xpubs");
+            for (let i = 0; i < xpubs.length; i++) {
+                const option = document.createElement("option");
+                option.value = xpubs[i];
+                option.text = xpubs[i];
+                select.appendChild(option);
+            }
+        }
+    </script>
 </body>
 </html>
