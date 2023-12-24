@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+	<script src="checker.js"></script>
     <title>Bitcoin Multisignature Wallet Descriptor</title>
 </head>
 <body>
@@ -11,19 +12,5 @@
     <br><br>
     <h2>Select a constituent xpub:</h2>
     <select id="xpubs"></select>
-    <script>
-        function loadConfiguration() {
-            const descriptor = document.getElementById("descriptor").value;
-            const regex = /(?<=xpub)\w+/g;
-            const xpubs = descriptor.match(regex).map(xpub => "xpub" + xpub);
-            const select = document.getElementById("xpubs");
-            for (let i = 0; i < xpubs.length; i++) {
-                const option = document.createElement("option");
-                option.value = xpubs[i];
-                option.text = xpubs[i];
-                select.appendChild(option);
-            }
-        }
-    </script>
 </body>
 </html>
