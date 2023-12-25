@@ -1,1 +1,1 @@
-const bip32 = require('bip32');
+const bip32 = require('bip32-utils');

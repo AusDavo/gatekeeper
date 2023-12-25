@@ -30,11 +30,3 @@ function calculatePublicKey() {
   // Display the public key on the page
   document.getElementById("public-key").innerHTML = publicKey;
 }
-
-if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
-    module.exports = {
-        loadConfiguration: loadConfiguration,
-        getPublicKeyFromDerivationPath: getPublicKeyFromDerivationPath,
-        calculatePublicKey: calculatePublicKey
-    };
-}

@@ -18,6 +18,7 @@
   },
   "homepage": "https://github.com/AusDavo/cosigner-competency-checker#readme",
   "dependencies": {
-    "bip32": "^1.0.4"
+    "bip32": "^1.0.4",
+    "bip32-utils": "^0.11.1"
   }
 }
