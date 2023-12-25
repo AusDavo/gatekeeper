@@ -1,1 +1,2 @@
-const bip32 = require('bip32-utils');
+const bip39 = require('bip39');
+const bitcoin = require('bitcoinjs-lib');

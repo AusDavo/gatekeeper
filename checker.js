@@ -13,20 +13,22 @@ function loadConfiguration() {
 }
 
 function getPublicKeyFromDerivationPath(xpub, path) {
-    const publicKey = bip32.fromBase58(xpub).derivePath(path).publicKey;
+    const rootNode = bitcoin.bip32.fromBase58(xpub);
+    const derivedNode = rootNode.derivePath(path);
+    const publicKey = derivedNode.publicKey;
     return publicKey;
-  }
+}
 
 function calculatePublicKey() {
-  // Get the selected xpub key from the dropdown list
-  const xpub = document.getElementById("xpubs").value;
+    // Get the selected xpub key from the dropdown list
+    const xpub = document.getElementById("xpubs").value;
 
-  // Get the derivation path from the input field
-  const path = document.getElementById("path").value;
+    // Get the derivation path from the input field
+    const path = document.getElementById("path").value;
 
-  // Call the getPublicKeyFromDerivationPath function to obtain the public key
-  const publicKey = getPublicKeyFromDerivationPath(xpub, path);
+    // Call the getPublicKeyFromDerivationPath function to obtain the public key
+    const publicKey = getPublicKeyFromDerivationPath(xpub, path);
 
-  // Display the public key on the page
-  document.getElementById("public-key").innerHTML = publicKey;
+    // Display the public key on the page
+    document.getElementById("public-key").innerHTML = publicKey.toString('hex');
 }
