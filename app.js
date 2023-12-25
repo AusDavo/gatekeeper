@@ -1,0 +1,1 @@
+const bip32 = require('bip32');

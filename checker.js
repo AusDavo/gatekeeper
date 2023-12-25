@@ -12,13 +12,10 @@ function loadConfiguration() {
     xpubs.forEach(xpub => select.add(new Option(xpub)));
 }
 
-const bip32 = require('bip32');
-
 function getPublicKeyFromDerivationPath(xpub, path) {
     const publicKey = bip32.fromBase58(xpub).derivePath(path).publicKey;
     return publicKey;
   }
-
 
 function calculatePublicKey() {
   // Get the selected xpub key from the dropdown list
@@ -32,4 +29,12 @@ function calculatePublicKey() {
 
   // Display the public key on the page
   document.getElementById("public-key").innerHTML = publicKey;
+}
+
+if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
+    module.exports = {
+        loadConfiguration: loadConfiguration,
+        getPublicKeyFromDerivationPath: getPublicKeyFromDerivationPath,
+        calculatePublicKey: calculatePublicKey
+    };
 }
