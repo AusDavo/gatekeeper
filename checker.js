@@ -13,7 +13,7 @@ function loadConfiguration() {
 }
 
 function getPublicKeyFromDerivationPath(xpub, path) {
-    const rootNode = bitcoin.bip32.fromBase58(xpub);
+    const rootNode = bip32.fromBase58(xpub);
     const derivedNode = rootNode.derivePath(path);
     const publicKey = derivedNode.publicKey;
     return publicKey;
