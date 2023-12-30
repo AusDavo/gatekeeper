@@ -1,6 +1,0 @@
-{
-  "dependencies": {
-    "bitcoinjs-lib": "^4.0.5",
-    "bitcoinjs-message": "^2.2.0"
-  }
-}
