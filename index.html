@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Bitcoin Signature Validation</title>
   <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
   <section>
@@ -19,6 +21,11 @@
     <select id="xpubDropdown" onchange="clearValidationStatement()">
       <option value="" disabled selected>Select an xpub</option>
     </select>
+  </section>
+
+  <section>
+    <!-- <label for="derivationPathResult">Derivation Path:</label> -->
+    <div id="derivationPathResult"></div>
   </section>
 
   <section>
@@ -40,9 +47,13 @@
   <script src="bundled.js"></script>
 
   <script>
+    // Declare associatedPathsAndXpubs in a scope accessible to both functions
+    let associatedPathsAndXpubs;
+
     function clearValidationStatement() {
       document.getElementById('validationResult').textContent = '';
     }
   </script>
 </body>
+
 </html>
