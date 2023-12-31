@@ -1,33 +1,35 @@
 body {
-    font-family: Arial, sans-serif;
-    margin: 20px;
-  }
+  font-family: Arial, sans-serif;
+  margin: 20px;
+}
 
-  label {
-    display: block;
-    margin-bottom: 5px;
-  }
+label {
+  display: block;
+  margin-bottom: 5px;
+}
 
-  textarea, input, select {
-    width: 100%;
-    padding: 8px;
-    margin-bottom: 10px;
-    box-sizing: border-box;
-  }
+textarea,
+input,
+select {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 10px;
+  box-sizing: border-box;
+}
 
-  button {
-    background-color: #4CAF50;
-    color: white;
-    padding: 10px;
-    border: none;
-    cursor: pointer;
-  }
+button {
+  background-color: #4caf50;
+  color: white;
+  padding: 10px;
+  border: none;
+  cursor: pointer;
+}
 
-  button:hover {
-    background-color: #45a049;
-  }
+button:hover {
+  background-color: #45a049;
+}
 
-  #validationResult {
-    margin-top: 20px;
-    font-weight: bold;
-  }
+#validationResult {
+  margin-top: 20px;
+  font-weight: bold;
+}

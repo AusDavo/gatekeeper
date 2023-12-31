@@ -82,7 +82,6 @@ window.extractXpubsAndPopulateDropdown = function () {
   }
 };
 
-
 window.interrogateXpub = function () {
   const selectedXpub = document.getElementById('xpubDropdown').value;
 

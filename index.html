@@ -1,59 +1,64 @@
 <!DOCTYPE html>
 <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bitcoin Signature Validation</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
 
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bitcoin Signature Validation</title>
-  <link rel="stylesheet" href="style.css">
-</head>
+  <body>
+    <section>
+      <label for="multisigConfigInput">Multisig Wallet Descriptor:</label>
+      <textarea id="multisigConfigInput" rows="5"></textarea>
+      <button onclick="extractXpubsAndPopulateDropdown()">Extract xpubs</button>
+    </section>
 
-<body>
+    <section id="xpubDropdownContainer" style="display: none">
+      <label for="xpubDropdown">Select xpub:</label>
+      <select id="xpubDropdown" onchange="clearValidationStatement()">
+        <option value="" disabled selected>Select an xpub</option>
+      </select>
+    </section>
 
-  <section>
-    <label for="multisigConfigInput">Multisig Wallet Descriptor:</label>
-    <textarea id="multisigConfigInput" rows="5"></textarea>
-    <button onclick="extractXpubsAndPopulateDropdown()">Extract xpubs</button>
-  </section>
+    <section>
+      <!-- <label for="derivationPathResult">Derivation Path:</label> -->
+      <div id="derivationPathResult"></div>
+    </section>
 
-  <section id="xpubDropdownContainer" style="display: none;">
-    <label for="xpubDropdown">Select xpub:</label>
-    <select id="xpubDropdown" onchange="clearValidationStatement()">
-      <option value="" disabled selected>Select an xpub</option>
-    </select>
-  </section>
+    <section>
+      <label for="messageInput">Enter Message:</label>
+      <input
+        type="text"
+        id="messageInput"
+        oninput="clearValidationStatement()"
+      />
+    </section>
 
-  <section>
-    <!-- <label for="derivationPathResult">Derivation Path:</label> -->
-    <div id="derivationPathResult"></div>
-  </section>
+    <section>
+      <label for="signatureInput">Enter Signature:</label>
+      <input
+        type="text"
+        id="signatureInput"
+        oninput="clearValidationStatement()"
+      />
+      <button onclick="interrogateXpub()">Interrogate xpub</button>
+    </section>
 
-  <section>
-    <label for="messageInput">Enter Message:</label>
-    <input type="text" id="messageInput" oninput="clearValidationStatement()">
-  </section>
+    <section>
+      <div id="validationResult"></div>
+    </section>
 
-  <section>
-    <label for="signatureInput">Enter Signature:</label>
-    <input type="text" id="signatureInput" oninput="clearValidationStatement()">
-    <button onclick="interrogateXpub()">Interrogate xpub</button>
-  </section>
+    <!-- Update the script tag to refer to bundled.js -->
+    <script src="bundled.js"></script>
 
-  <section>
-    <div id="validationResult"></div>
-  </section>
+    <script>
+      // Declare associatedPathsAndXpubs in a scope accessible to both functions
+      let associatedPathsAndXpubs;
 
-  <!-- Update the script tag to refer to bundled.js -->
-  <script src="bundled.js"></script>
-
-  <script>
-    // Declare associatedPathsAndXpubs in a scope accessible to both functions
-    let associatedPathsAndXpubs;
-
-    function clearValidationStatement() {
-      document.getElementById('validationResult').textContent = '';
-    }
-  </script>
-</body>
-
+      function clearValidationStatement() {
+        document.getElementById("validationResult").textContent = "";
+      }
+    </script>
+  </body>
 </html>
