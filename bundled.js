@@ -75,7 +75,7 @@ function populateXpubDropdown(xpubsAndFingerprints) {
     // Limit the characters displayed before the ellipsis for the xpub
     const xpubFormatted = `${entry.xpub.slice(0, 10)}...${entry.xpub.slice(-6)}`;
     const fingerprintFormatted = entry.xpubFingerprint !== 'unknown'
-      ? ` (fingerprint: "${entry.xpubFingerprint}")`
+      ? ` (fingerprint: ${entry.xpubFingerprint})`
       : '';
 
     // Set the formatted string as the text content of the option
