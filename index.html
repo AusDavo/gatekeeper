@@ -8,10 +8,24 @@
   </head>
 
   <body>
-    <section>
-      <label for="multisigConfigInput">Multisig Wallet Descriptor:</label>
+    <section id="multisigSection">
+      <label for="multisigConfigInput" id="multisigLabel"
+        >Multisig Wallet Descriptor:</label
+      >
       <textarea id="multisigConfigInput" rows="5"></textarea>
-      <button onclick="extractXpubsAndPopulateDropdown()">Extract xpubs</button>
+      <button
+        id="extractXpubsButton"
+        onclick="extractXpubsAndPopulateDropdown()"
+      >
+        Extract xpubs
+      </button>
+      <button
+        id="importDescriptorButton"
+        onclick="importMultisigDescriptor()"
+        style="display: none"
+      >
+        Import new multisig wallet descriptor
+      </button>
     </section>
 
     <section id="xpubDropdownContainer" style="display: none">
@@ -21,32 +35,34 @@
       </select>
     </section>
 
-    <section>
-      <!-- <label for="derivationPathResult">Derivation Path:</label> -->
-      <div id="derivationPathResult"></div>
-    </section>
+    <section id="elementsBelowXpub" style="display: none">
+      <section>
+        <!-- <label for="derivationPathResult">Derivation Path:</label> -->
+        <div id="derivationPathResult"></div>
+      </section>
 
-    <section>
-      <label for="messageInput">Enter Message:</label>
-      <input
-        type="text"
-        id="messageInput"
-        oninput="clearValidationStatement()"
-      />
-    </section>
+      <section>
+        <label for="messageInput">Enter Message:</label>
+        <input
+          type="text"
+          id="messageInput"
+          oninput="clearValidationStatement()"
+        />
+      </section>
 
-    <section>
-      <label for="signatureInput">Enter Signature:</label>
-      <input
-        type="text"
-        id="signatureInput"
-        oninput="clearValidationStatement()"
-      />
-      <button onclick="interrogateXpub()">Interrogate xpub</button>
-    </section>
+      <section>
+        <label for="signatureInput">Enter Signature:</label>
+        <input
+          type="text"
+          id="signatureInput"
+          oninput="clearValidationStatement()"
+        />
+        <button onclick="interrogateXpub()">Interrogate xpub</button>
+      </section>
 
-    <section>
-      <div id="validationResult"></div>
+      <section>
+        <div id="validationResult"></div>
+      </section>
     </section>
 
     <!-- Update the script tag to refer to bundled.js -->
