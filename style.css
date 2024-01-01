@@ -1,28 +1,29 @@
 body {
-  font-family: Arial, sans-serif;
+  font-family: "Arial", sans-serif;
   margin: 20px;
-}
-
-label {
-  display: block;
-  margin-bottom: 5px;
+  background-color: #f8f8f8;
+  color: #333;
 }
 
 textarea,
 input,
 select {
   width: 100%;
-  padding: 8px;
+  padding: 10px;
   margin-bottom: 10px;
   box-sizing: border-box;
+  border: 1px solid #ccc;
+  border-radius: 5px;
 }
 
 button {
   background-color: #4caf50;
   color: white;
-  padding: 10px;
+  padding: 12px;
   border: none;
+  border-radius: 5px;
   cursor: pointer;
+  transition: background-color 0.3s ease;
 }
 
 button:hover {
@@ -32,4 +33,5 @@ button:hover {
 #validationResult {
   margin-top: 20px;
   font-weight: bold;
+  color: #e74c3c;
 }
