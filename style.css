@@ -35,3 +35,12 @@ button:hover {
   font-weight: bold;
   color: #e74c3c;
 }
+
+#importDescriptorButton {
+  display: none;
+}
+
+#xpubDropdownContainer,
+#elementsBelowXpub {
+  display: none;
+}

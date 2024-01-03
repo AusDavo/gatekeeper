@@ -13,68 +13,40 @@
         >Multisig Wallet Descriptor:</label
       >
       <textarea id="multisigConfigInput" rows="5"></textarea>
-      <button
-        id="extractXpubsButton"
-        onclick="extractXpubsAndPopulateDropdown()"
-      >
-        Extract xpubs
-      </button>
-      <button
-        id="importDescriptorButton"
-        onclick="importMultisigDescriptor()"
-        style="display: none"
-      >
+      <button id="extractXpubsButton">Extract xpubs</button>
+      <button id="importDescriptorButton">
         Import new multisig wallet descriptor
       </button>
     </section>
 
-    <section id="xpubDropdownContainer" style="display: none">
+    <section id="xpubDropdownContainer">
       <label for="xpubDropdown">Select xpub:</label>
-      <select id="xpubDropdown" onchange="clearValidationStatement()">
+      <select id="xpubDropdown">
         <option value="" disabled selected>Select an xpub</option>
       </select>
     </section>
 
-    <section id="elementsBelowXpub" style="display: none">
+    <section id="elementsBelowXpub">
       <section>
-        <!-- <label for="derivationPathResult">Derivation Path:</label> -->
         <div id="derivationPathResult"></div>
       </section>
 
       <section>
         <label for="messageInput">Enter Message:</label>
-        <input
-          type="text"
-          id="messageInput"
-          oninput="clearValidationStatement()"
-        />
+        <input type="text" id="messageInput" />
       </section>
 
       <section>
         <label for="signatureInput">Enter Signature:</label>
-        <input
-          type="text"
-          id="signatureInput"
-          oninput="clearValidationStatement()"
-        />
-        <button onclick="evaluateSignature()">Evaluate signature</button>
+        <input type="text" id="signatureInput" />
+        <button id="evaluateSignatureButton">Evaluate signature</button>
       </section>
 
       <section>
         <div id="validationResult"></div>
       </section>
     </section>
-
-    <!-- Update the script tag to refer to bundled.js -->
     <script src="bundled.js"></script>
-
-    <script>
-      // Declare associatedPathsAndXpubs in a scope accessible to both functions
-      let associatedPathsAndXpubs;
-
-      function clearValidationStatement() {
-        document.getElementById("validationResult").textContent = "";
-      }
-    </script>
+    <script defer src="script.js"></script>
   </body>
 </html>
