@@ -14,17 +14,9 @@
       >
       <textarea id="multisigConfigInput" rows="5"></textarea>
       <button id="extractXpubsButton">Extract xpubs</button>
-      <button id="importDescriptorButton">
-        Import new multisig wallet descriptor
-      </button>
     </section>
 
-    <section id="xpubDropdownContainer">
-      <label for="xpubDropdown">Select xpub:</label>
-      <select id="xpubDropdown">
-        <option value="" disabled selected>Select an xpub</option>
-      </select>
-    </section>
+    <section id="xpubRadioContainer"></section>
 
     <section id="elementsBelowXpub">
       <section>
@@ -46,7 +38,11 @@
         <div id="validationResult"></div>
       </section>
     </section>
-    <script src="bundled.js"></script>
-    <script defer src="script.js"></script>
+
+    <section id="importDescriptorContainer">
+      <button id="importDescriptorButton">Import a new descriptor</button>
+    </section>
+    <script defer src="bundled.js"></script>
+    <!-- <script defer src="script.js"></script> -->
   </body>
 </html>

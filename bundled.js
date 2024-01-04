@@ -6190,7 +6190,47 @@ module.exports = {
 },{"bitcoinjs-lib":49,"bitcoinjs-message":87,"buffer":3}],28:[function(require,module,exports){
 const bitcoinUtils = require("./bitcoin-utils");
 
-let associatedPathsAndXpubs; // Declare it globally
+const associatedPathsAndXpubs = [];
+let selectedXpub = null;
+
+const showElement = (element, displayType = "block") => {
+  if (element && element.style) {
+    element.style.display = displayType;
+  }
+};
+
+const hideElement = (element) => {
+  if (element && element.style) {
+    element.style.display = "none";
+  }
+};
+
+function clearValidationStatement() {
+  document.getElementById("validationResult").textContent = "";
+}
+
+document.body.addEventListener("input", function (event) {
+  if (
+    event.target.id === "messageInput" ||
+    event.target.id === "signatureInput"
+  ) {
+    clearValidationStatement();
+  }
+});
+
+document
+  .getElementById("extractXpubsButton")
+  .addEventListener("click", function () {
+    extractXpubsAndPopulateRadioButtons(associatedPathsAndXpubs);
+  });
+document
+  .getElementById("importDescriptorButton")
+  .addEventListener("click", importMultisigDescriptor);
+document
+  .getElementById("evaluateSignatureButton")
+  .addEventListener("click", function () {
+    evaluateSignature(selectedXpub);
+  });
 
 function logSignatureValidationResult(isValid) {
   const resultElement = document.getElementById("validationResult");
@@ -6210,37 +6250,43 @@ function extractPathsAndXpubsFromMultisigConfig(multisigConfig) {
   const formatPath = (path) =>
     (path.match(pathsRegex) || ["unknown"])[0].replace(/h/g, "'");
 
-  const associatedPathsAndXpubs = () => {
-    const xpubs = extractMatches(xpubsRegex);
+  return extractMatches(xpubsRegex).map((xpub, index) => {
     const xpubFingerprints = extractMatches(xpubFingerprintRegex);
     const parts = multisigConfig.split(/\b\w*xpub\w*\b/);
 
-    return xpubs.map((xpub, index) => ({
+    return {
       path: formatPath(parts[index]),
       xpub,
       xpubFingerprint: xpubFingerprints[index] || "unknown",
-    }));
-  };
-
-  return associatedPathsAndXpubs();
+    };
+  });
 }
 
-function populateXpubDropdown(xpubsAndFingerprints) {
-  const dropdown = document.getElementById("xpubDropdown");
-  dropdown.innerHTML = ""; // Clear existing options
+function populateXpubRadioLabels(xpubsAndFingerprints, container) {
+  container.innerHTML = ""; // Clear existing options
 
-  xpubsAndFingerprints.forEach((entry) => {
+  xpubsAndFingerprints.forEach((entry, index) => {
     const { xpub, xpubFingerprint } = entry;
 
-    const option = document.createElement("option");
-    option.value = xpub;
+    const radioBtn = document.createElement("input");
+    radioBtn.type = "radio";
+    radioBtn.name = "xpubRadio";
+    radioBtn.value = xpub;
+    radioBtn.id = `xpubRadio${index + 1}`;
+
+    const label = document.createElement("label");
+    label.htmlFor = `xpubRadio${index + 1}`;
 
     const shortXpub = `${xpub.slice(0, 10)}...${xpub.slice(-6)}`;
     const fingerprintFormatted =
       xpubFingerprint !== "unknown" ? ` (fingerprint: ${xpubFingerprint})` : "";
 
-    option.innerHTML = `<strong>${shortXpub}</strong>${fingerprintFormatted}`;
-    dropdown.appendChild(option);
+    label.textContent = `${shortXpub}${fingerprintFormatted}`;
+
+    container.appendChild(radioBtn);
+    container.appendChild(label);
+
+    container.appendChild(document.createElement("br"));
   });
 }
 
@@ -6254,74 +6300,12 @@ window.onload = function () {
   };
 
   hideElement("elementsBelowXpub");
-  hideElement("xpubDropdownContainer");
-};
+  // Get reference to xpubRadioContainer
+  const xpubRadioContainer = document.getElementById("xpubRadioContainer");
 
-window.extractXpubsAndPopulateDropdown = function () {
-  const getElement = (id) => document.getElementById(id);
-  const hideElement = (element) => (element.style.display = "none");
-  const showElement = (element, displayType = "block") =>
-    (element.style.display = displayType);
-
-  const {
-    multisigConfigInput,
-    extractXpubsButton,
-    importDescriptorButton,
-    multisigLabel,
-    xpubDropdownContainer,
-    elementsBelowXpub,
-    derivationPathResult,
-    messageInput,
-    signatureInput,
-    evaluateSignatureButton,
-  } = {
-    multisigConfigInput: getElement("multisigConfigInput"),
-    extractXpubsButton: getElement("extractXpubsButton"),
-    importDescriptorButton: getElement("importDescriptorButton"),
-    multisigLabel: getElement("multisigLabel"),
-    xpubDropdownContainer: getElement("xpubDropdownContainer"),
-    elementsBelowXpub: getElement("elementsBelowXpub"),
-    derivationPathResult: getElement("derivationPathResult"),
-    messageInput: getElement("messageInput"),
-    signatureInput: getElement("signatureInput"),
-    evaluateSignatureButton: getElement("evaluateSignatureButton"),
-  };
-
-  try {
-    const associatedPathsAndXpubs = extractPathsAndXpubsFromMultisigConfig(
-      multisigConfigInput.value
-    );
-
-    console.log("Associated Paths and XPubs:", associatedPathsAndXpubs);
-
-    populateXpubDropdown(associatedPathsAndXpubs);
-
-    showElement(xpubDropdownContainer);
-    hideElement(elementsBelowXpub);
-
-    const initialSelectedXpub = getElement("xpubDropdown").value;
-    const initialSelectedEntry = associatedPathsAndXpubs.find(
-      (entry) => entry.xpub === initialSelectedXpub
-    );
-    const initialFormattedPath = initialSelectedEntry
-      ? initialSelectedEntry.path
-      : "unknown";
-
-    const initialSelectedAddress = bitcoinUtils.deriveAddress(
-      initialSelectedXpub,
-      0
-    ).address;
-    derivationPathResult.innerHTML = `Ask your multisig collaborator to sign a message with the private key for <strong>${initialSelectedAddress}</strong>. This is derived from the first child public key of the selected xpub. Its derivation path from your collaborator's BIP32 root key (m) is m${initialFormattedPath}/0.`;
-
-    hideElement(multisigConfigInput);
-    hideElement(extractXpubsButton);
-    hideElement(multisigLabel);
-
-    showElement(importDescriptorButton, "inline-block");
-
-    const xpubDropdown = getElement("xpubDropdown");
-    xpubDropdown.addEventListener("change", function () {
-      const selectedXpub = this.value;
+  xpubRadioContainer.addEventListener("change", function (event) {
+    const selectedXpub = event.target.value;
+    if (selectedXpub) {
       const selectedEntry = associatedPathsAndXpubs.find(
         (entry) => entry.xpub === selectedXpub
       );
@@ -6337,54 +6321,135 @@ window.extractXpubsAndPopulateDropdown = function () {
       showElement(messageInput, "inline-block");
       showElement(signatureInput, "inline-block");
       showElement(evaluateSignatureButton, "inline-block");
+    }
+  });
+};
+
+function extractXpubsAndPopulateRadioButtons() {
+  const getElement = (id) => document.getElementById(id);
+  const hideElement = (element) => (element.style.display = "none");
+  const showElement = (element, displayType = "block") =>
+    (element.style.display = displayType);
+
+  // Get reference to xpubRadioContainer
+  const xpubRadioContainer = getElement("xpubRadioContainer");
+
+  const {
+    multisigSection,
+    importDescriptorButton,
+    elementsBelowXpub,
+    derivationPathResult,
+    messageInput,
+    signatureInput,
+    evaluateSignatureButton,
+  } = {
+    multisigSection: getElement("multisigSection"),
+    importDescriptorButton: getElement("importDescriptorButton"),
+    elementsBelowXpub: getElement("elementsBelowXpub"),
+    derivationPathResult: getElement("derivationPathResult"),
+    messageInput: getElement("messageInput"),
+    signatureInput: getElement("signatureInput"),
+    evaluateSignatureButton: getElement("evaluateSignatureButton"),
+  };
+
+  try {
+    associatedPathsAndXpubs.length = 0; // Clear the existing array
+    associatedPathsAndXpubs.push(
+      ...extractPathsAndXpubsFromMultisigConfig(multisigConfigInput.value)
+    );
+
+    console.log("Associated Paths and XPubs:", associatedPathsAndXpubs);
+
+    showElement(importDescriptorButton, "inline-block");
+
+    // Dynamically create and populate radio buttons
+    associatedPathsAndXpubs.forEach((entry, index) => {
+      const radioBtn = document.createElement("input");
+      radioBtn.type = "radio";
+      radioBtn.name = "xpubRadio";
+      radioBtn.value = entry.xpub;
+      radioBtn.id = `xpubRadio${index + 1}`;
+      const label = document.createElement("label");
+      label.htmlFor = `xpubRadio${index + 1}`;
+      label.innerText = `XPub ${index + 1}`;
+
+      xpubRadioContainer.appendChild(radioBtn);
+      xpubRadioContainer.appendChild(label);
+
+      xpubRadioContainer.appendChild(document.createElement("br"));
+
+      showElement(xpubRadioContainer, "inline-block");
+
+      xpubRadioContainer.addEventListener("change", function (event) {
+        const selectedXpub = event.target.value;
+        if (selectedXpub) {
+          const selectedEntry = associatedPathsAndXpubs.find(
+            (entry) => entry.xpub === selectedXpub
+          );
+          const formattedPath = selectedEntry ? selectedEntry.path : "unknown";
+
+          const selectedAddress = bitcoinUtils.deriveAddress(
+            selectedXpub,
+            0
+          ).address;
+          derivationPathResult.innerHTML = `The Bitcoin address <strong>${selectedAddress}</strong> is derived from the selected xpub. The key pair for this address originates from the first child keys under that xpub, following the BIP32 root key's path <strong>m${formattedPath}/0</strong>. To confirm your collaborator's continued key control in your multisig wallet, request them to sign a new message. Paste the returned signature in the box below and click the button for verification. A successful outcome indicates that your collaborator maintains control over their key for your shared multisig setup.`;
+
+          showElement(elementsBelowXpub);
+          showElement(messageInput, "inline-block");
+          showElement(signatureInput, "inline-block");
+          showElement(evaluateSignatureButton, "inline-block");
+
+          // Clear the validation result when a new selection is made
+          clearValidationStatement();
+        }
+      });
     });
+
+    // Use the function to populate radio buttons and labels
+    populateXpubRadioLabels(associatedPathsAndXpubs, xpubRadioContainer);
   } catch (error) {
     console.error("Error during xpub extraction:", error.message);
   }
-};
+  // Hide unnecessary elements after extracting XPubs
+  hideElement(multisigSection);
+}
 
-window.importMultisigDescriptor = function () {
+function importMultisigDescriptor() {
   const getById = (id) => document.getElementById(id);
   const show = (element, displayType = "inline-block") =>
     (element.style.display = displayType);
   const hide = (element) => (element.style.display = "none");
 
   const {
-    multisigConfigInput,
+    multisigSection,
     extractXpubsButton,
-    importDescriptorButton,
-    multisigLabel,
     elementsBelowXpub,
-    xpubDropdownContainer,
+    xpubRadioContainer,
+    importDescriptorButton,
   } = {
-    multisigConfigInput: getById("multisigConfigInput"),
+    multisigSection: getById("multisigSection"),
     extractXpubsButton: getById("extractXpubsButton"),
-    importDescriptorButton: getById("importDescriptorButton"),
-    multisigLabel: getById("multisigLabel"),
     elementsBelowXpub: getById("elementsBelowXpub"),
-    xpubDropdownContainer: getById("xpubDropdownContainer"),
+    xpubRadioContainer: getById("xpubRadioContainer"),
+    importDescriptorButton: getById("importDescriptorButton"),
   };
 
   // Show the original input, button, and label
-  [multisigConfigInput, extractXpubsButton, multisigLabel].forEach((element) =>
-    show(element)
-  );
-
-  // Hide the import button
-  hide(importDescriptorButton);
+  [multisigSection, extractXpubsButton].forEach((element) => show(element));
 
   // Hide the elements below xpub and the "Select xpub" dropdown when importing
-  [elementsBelowXpub, xpubDropdownContainer].forEach(hide);
+  [elementsBelowXpub, xpubRadioContainer, importDescriptorButton].forEach(hide);
 
   // Clear the existing input value
   multisigConfigInput.value = "";
 
   // Optionally, you can reset or hide other related elements as needed
-};
+}
 
-window.evaluateSignature = function () {
-  const getXpubDropdownValue = () =>
-    document.getElementById("xpubDropdown").value;
+function evaluateSignature() {
+  // Declare selectedXpub with a default value
+  let selectedXpub = null;
+
   const getAddressFromXpub = (xpub) =>
     bitcoinUtils.deriveAddress(xpub, 0).address;
 
@@ -6392,8 +6457,22 @@ window.evaluateSignature = function () {
   const messageInputValue =
     document.getElementById("messageInput").value || "default";
 
+  // Find the selected radio button
+  const selectedRadio = document.querySelector(
+    'input[name="xpubRadio"]:checked'
+  );
+
   try {
-    const selectedXpub = getXpubDropdownValue();
+    if (selectedRadio) {
+      // Extract the index from the radio button's id
+      const index = parseInt(selectedRadio.id.replace("xpubRadio", "")) - 1;
+
+      // Use the index to get the associated xpub from the stored array
+      selectedXpub = associatedPathsAndXpubs[index].xpub;
+    } else {
+      throw new Error("No xpub selected");
+    }
+
     const address = getAddressFromXpub(selectedXpub);
 
     const isValid = bitcoinUtils.validateSignature(
@@ -6408,7 +6487,18 @@ window.evaluateSignature = function () {
     console.error("Error during signature validation:", error.message);
     logSignatureValidationResult(false);
   }
-};
+  evaluateSignatureButton.addEventListener("click", function () {
+    evaluateSignature();
+  });
+}
+// Add an event listener to the "Evaluate Signature" button
+document
+  .getElementById("evaluateSignatureButton")
+  .addEventListener("click", evaluateSignature);
+
+document
+  .getElementById("importDescriptorButton")
+  .addEventListener("click", importMultisigDescriptor);
 
 },{"./bitcoin-utils":27}],29:[function(require,module,exports){
 'use strict'

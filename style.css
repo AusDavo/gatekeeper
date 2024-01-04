@@ -36,11 +36,54 @@ button:hover {
   color: #e74c3c;
 }
 
-#importDescriptorButton {
-  display: none;
+#importDescriptorContainer {
+  margin-top: 20px; /* Adjust the margin as needed */
 }
 
-#xpubDropdownContainer,
-#elementsBelowXpub {
+#importDescriptorButton {
   display: none;
+  background-color: #3498db; /* Adjust the color as needed */
+  color: white;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+#importDescriptorButton:hover {
+  background-color: #2980b9; /* Adjust the hover color as needed */
+}
+
+/* Add this style for the radio buttons */
+input[type="radio"] {
+  display: none; /* Hide the actual radio buttons */
+}
+
+/* Style for the radio button container */
+#xpubRadioContainer {
+  margin-top: 10px;
+}
+
+/* Style for each radio button label */
+#xpubRadioContainer label {
+  display: inline-block;
+  padding: 10px;
+  margin: 5px;
+  background-color: #6ab04c; /* Green */
+  color: white;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+/* Hover effect for the radio button labels */
+#xpubRadioContainer label:hover {
+  background-color: #4d8c3c; /* Darker green on hover */
+}
+
+/* Style for the selected radio button label */
+#xpubRadioContainer input[type="radio"]:checked + label {
+  background-color: #3d6e2e; /* Dark green for selected */
+  border: 2px solid #e74c3c; /* Highlighted border */
 }
