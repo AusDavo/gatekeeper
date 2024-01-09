@@ -138,27 +138,6 @@ window.onload = function () {
   hideElement("elementsBelowXpub");
   // Get reference to xpubRadioContainer
   const xpubRadioContainer = document.getElementById("xpubRadioContainer");
-
-  xpubRadioContainer.addEventListener("change", function (event) {
-    const selectedXpub = event.target.value;
-    if (selectedXpub) {
-      const selectedEntry = associatedPathsAndXpubs.find(
-        (entry) => entry.xpub === selectedXpub
-      );
-      const formattedPath = selectedEntry ? selectedEntry.path : "unknown";
-
-      const selectedAddress = bitcoinUtils.deriveAddress(
-        selectedXpub,
-        0
-      ).address;
-      derivationPathResult.innerHTML = `The Bitcoin address <strong>${selectedAddress}</strong> is derived from the selected xpub. The key pair for this address originates from the first child keys under that xpub, following the BIP32 root key's path <strong>m${formattedPath}/0</strong>. To confirm your collaborator's continued key control in your multisig wallet, request them to sign a new message. Paste the returned signature in the box below and click the button for verification. A successful outcome indicates that your collaborator maintains control over their key for your shared multisig setup.`;
-
-      showElement(elementsBelowXpub);
-      showElement(messageInput, "inline-block");
-      showElement(signatureInput, "inline-block");
-      showElement(evaluateSignatureButton, "inline-block");
-    }
-  });
 };
 
 function extractXpubsAndPopulateRadioButtons() {
@@ -228,7 +207,13 @@ function extractXpubsAndPopulateRadioButtons() {
             selectedXpub,
             0
           ).address;
-          derivationPathResult.innerHTML = `The Bitcoin address <strong>${selectedAddress}</strong> is derived from the selected xpub. The key pair for this address originates from the first child keys under that xpub, following the BIP32 root key's path <strong>m${formattedPath}/0</strong>. To confirm your collaborator's continued key control in your multisig wallet, request them to sign a new message. Paste the returned signature in the box below and click the button for verification. A successful outcome indicates that your collaborator maintains control over their key for your shared multisig setup.`;
+          derivationPathResult.innerHTML = `
+  The first child key of the selected xpub affords the following address:<br>
+  <strong>${selectedAddress}</strong><br>
+  Your collaborator can derive its corresponding private key from the BIP32 root key using this path:<br>
+  <strong>m${formattedPath}/0</strong><br>
+  Ask your collaborator to sign a new message using this key. Paste the returned signature below and click the button to evaluate it. A successful outcome indicates that your collaborator maintains control over their key.
+`;
 
           showElement(elementsBelowXpub);
           showElement(messageInput, "inline-block");
