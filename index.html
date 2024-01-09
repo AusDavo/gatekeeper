@@ -9,10 +9,23 @@
 
   <body>
     <section id="multisigSection">
-      <label for="multisigConfigInput" id="multisigLabel"
-        >Multisig Wallet Descriptor:</label
-      >
-      <textarea id="multisigConfigInput" rows="5"></textarea>
+      <div id="uploadContainer">
+        <label for="fileInput" id="uploadButton"
+          >Upload a multisig wallet descriptor</label
+        >
+        <input
+          type="file"
+          id="fileInput"
+          accept=".txt, .json"
+          onchange="handleFileSelection()"
+        />
+      </div>
+      <textarea
+        id="multisigConfigInput"
+        rows="5"
+        placeholder="Or paste one here."
+      ></textarea>
+
       <button id="extractXpubsButton">Extract xpubs</button>
     </section>
 

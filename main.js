@@ -28,6 +28,32 @@ document.body.addEventListener("input", function (event) {
   }
 });
 
+const fileInput = document.getElementById("fileInput");
+
+fileInput.addEventListener("change", handleFileUpload);
+
+function handleFileUpload(event) {
+  const file = event.target.files[0];
+
+  if (file) {
+    const reader = new FileReader();
+
+    reader.onload = function (e) {
+      const fileContent = e.target.result;
+
+      // Populate the multisigConfigInput with the content of the file
+      document.getElementById("multisigConfigInput").value = fileContent;
+
+      // Trigger the logic as if the "Extract XPUBs" button was clicked
+      extractXpubsAndPopulateRadioButtons();
+    };
+
+    reader.readAsText(file);
+  } else {
+    console.error("No file selected");
+  }
+}
+
 document
   .getElementById("extractXpubsButton")
   .addEventListener("click", function () {
