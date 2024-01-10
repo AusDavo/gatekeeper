@@ -6435,12 +6435,13 @@ function extractXpubsAndPopulateRadioButtons() {
           showElement(messageInput, "inline-block");
           showElement(signatureInput, "inline-block");
           showElement(evaluateSignatureButton, "inline-block");
+
+          const messageInputValue =
+            document.getElementById("messageInput").value || "";
+
           showCopyButton(); // Display the copy button
           copyButton.addEventListener("click", function () {
-            copyToClipboard(`${selectedAddress}\n\nm${formattedPath}/0`);
-          });
-          copyButton.addEventListener("click", function () {
-            copyToClipboard(`${selectedAddress}\n\nm${formattedPath}/0`);
+            copyToClipboard(`${messageInputValue}\nm${formattedPath}/0`);
             showCopySuccessNotification(); // Display copy success notification
           });
 
@@ -6499,8 +6500,7 @@ function evaluateSignature() {
     bitcoinUtils.deriveAddress(xpub, 0).address;
 
   const signatureInputValue = document.getElementById("signatureInput").value;
-  const messageInputValue =
-    document.getElementById("messageInput").value || "default";
+  const messageInputValue = document.getElementById("messageInput").value || "";
 
   // Find the selected radio button
   const selectedRadio = document.querySelector(

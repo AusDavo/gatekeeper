@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Bitcoin Signature Validation</title>
     <link rel="stylesheet" href="style.css" />
+    <script
+      src="https://kit.fontawesome.com/2d818d2cc6.js"
+      crossorigin="anonymous"
+    ></script>
   </head>
 
   <body>
@@ -13,12 +17,7 @@
         <label for="fileInput" id="uploadButton"
           >Upload a multisig wallet descriptor</label
         >
-        <input
-          type="file"
-          id="fileInput"
-          accept=".txt, .bsms"
-          onchange="handleFileSelection()"
-        />
+        <input type="file" id="fileInput" accept=".txt, .bsms" />
       </div>
       <textarea
         id="multisigConfigInput"
@@ -43,8 +42,9 @@
 
       <section>
         <button id="copyButton" style="display: none">
-          Copy Message and Path
+          <i class="fa-regular fa-copy"></i> Copy Message and Derivation Path
         </button>
+
         <span id="copyNotification" style="display: none">Copied!</span>
       </section>
 
