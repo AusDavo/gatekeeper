@@ -140,6 +140,32 @@ window.onload = function () {
   const xpubRadioContainer = document.getElementById("xpubRadioContainer");
 };
 
+function copyToClipboard(text) {
+  const dummyElement = document.createElement("textarea");
+  dummyElement.value = text;
+  document.body.appendChild(dummyElement);
+  dummyElement.select();
+  document.execCommand("copy");
+  document.body.removeChild(dummyElement);
+}
+
+function showCopyButton() {
+  const copyButton = document.getElementById("copyButton");
+  if (copyButton) {
+    copyButton.style.display = "inline-block";
+  }
+}
+
+function showCopySuccessNotification() {
+  const copyNotification = document.getElementById("copyNotification");
+  if (copyNotification) {
+    copyNotification.style.display = "inline-block";
+    setTimeout(() => {
+      copyNotification.style.display = "none";
+    }, 2000); // Hide the notification after 2 seconds
+  }
+}
+
 function extractXpubsAndPopulateRadioButtons() {
   const getElement = (id) => document.getElementById(id);
   const hideElement = (element) => (element.style.display = "none");
@@ -219,6 +245,14 @@ function extractXpubsAndPopulateRadioButtons() {
           showElement(messageInput, "inline-block");
           showElement(signatureInput, "inline-block");
           showElement(evaluateSignatureButton, "inline-block");
+          showCopyButton(); // Display the copy button
+          copyButton.addEventListener("click", function () {
+            copyToClipboard(`${selectedAddress}\n\nm${formattedPath}/0`);
+          });
+          copyButton.addEventListener("click", function () {
+            copyToClipboard(`${selectedAddress}\n\nm${formattedPath}/0`);
+            showCopySuccessNotification(); // Display copy success notification
+          });
 
           // Clear the validation result when a new selection is made
           clearValidationStatement();
