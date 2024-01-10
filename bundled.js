@@ -6258,11 +6258,14 @@ document
     evaluateSignature(selectedXpub);
   });
 
-function logSignatureValidationResult(isValid) {
+function logSignatureValidationResult(isValid, errorMessage) {
   const resultElement = document.getElementById("validationResult");
-  resultElement.textContent = isValid
-    ? "Signature is valid!"
-    : "Signature is NOT valid!";
+
+  if (isValid) {
+    resultElement.textContent = "Signature is valid!";
+  } else {
+    resultElement.textContent = errorMessage || "Signature is NOT valid!";
+  }
 }
 
 function extractPathsAndXpubsFromMultisigConfig(multisigConfig) {
@@ -6389,8 +6392,6 @@ function extractXpubsAndPopulateRadioButtons() {
       ...extractPathsAndXpubsFromMultisigConfig(multisigConfigInput.value)
     );
 
-    console.log("Associated Paths and XPubs:", associatedPathsAndXpubs);
-
     showElement(importDescriptorButton, "inline-block");
 
     // Dynamically create and populate radio buttons
@@ -6500,7 +6501,8 @@ function evaluateSignature() {
     bitcoinUtils.deriveAddress(xpub, 0).address;
 
   const signatureInputValue = document.getElementById("signatureInput").value;
-  const messageInputValue = document.getElementById("messageInput").value || "";
+  const messageInputValue =
+    document.getElementById("messageInput").value || "default";
 
   // Find the selected radio button
   const selectedRadio = document.querySelector(
@@ -6520,22 +6522,35 @@ function evaluateSignature() {
 
     const address = getAddressFromXpub(selectedXpub);
 
+    // Check if the signature is malformed or absent
+    if (signatureInputValue.length === 0) {
+      throw new Error("Signature is absent");
+    } else if (signatureInputValue.length % 2 !== 0) {
+      throw new Error("Invalid signature length");
+    }
+
     const isValid = bitcoinUtils.validateSignature(
       messageInputValue,
       signatureInputValue,
       address
     );
 
-    // Log the validation result
+    // Log the validation result with error message
     logSignatureValidationResult(isValid);
   } catch (error) {
-    console.error("Error during signature validation:", error.message);
-    logSignatureValidationResult(false);
+    if (
+      error.message === "Invalid signature length" ||
+      error.message === "Signature is absent"
+    ) {
+      // Provide user-friendly feedback for invalid signatures
+      logSignatureValidationResult(false, error.message);
+    } else {
+      // Handle other errors
+      logSignatureValidationResult(false, "An unexpected error occurred.");
+    }
   }
-  evaluateSignatureButton.addEventListener("click", function () {
-    evaluateSignature();
-  });
 }
+
 // Add an event listener to the "Evaluate Signature" button
 document
   .getElementById("evaluateSignatureButton")
