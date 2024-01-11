@@ -3,18 +3,6 @@ const bitcoinUtils = require("./bitcoin-utils");
 const associatedPathsAndXpubs = [];
 let selectedXpub = null;
 
-const showElement = (element, displayType = "block") => {
-  if (element && element.style) {
-    element.style.display = displayType;
-  }
-};
-
-const hideElement = (element) => {
-  if (element && element.style) {
-    element.style.display = "none";
-  }
-};
-
 function clearValidationStatement() {
   document.getElementById("validationResult").textContent = "";
 }
@@ -143,12 +131,18 @@ window.onload = function () {
   const xpubRadioContainer = document.getElementById("xpubRadioContainer");
 };
 
-async function copyToClipboard(text) {
+function copyToClipboard(text) {
   try {
-    await navigator.clipboard.writeText(text);
-    console.log("Text successfully copied to clipboard");
+    navigator.clipboard
+      .writeText(text)
+      .then(() => {
+        console.log("Text successfully copied to clipboard");
+      })
+      .catch((err) => {
+        console.error("Unable to copy to clipboard", err);
+      });
   } catch (err) {
-    console.error("Unable to copy to clipboard", err);
+    console.error("Clipboard write is not supported", err);
   }
 }
 
@@ -172,7 +166,7 @@ function showCopySuccessNotification() {
 function extractXpubsAndPopulateRadioButtons() {
   const getElement = (id) => document.getElementById(id);
   const hideElement = (element) => (element.style.display = "none");
-  const showElement = (element, displayType = "block") =>
+  const showElement = (element, displayType = "inline-block") =>
     (element.style.display = displayType);
 
   // Get reference to xpubRadioContainer
@@ -186,6 +180,7 @@ function extractXpubsAndPopulateRadioButtons() {
     messageInput,
     signatureInput,
     evaluateSignatureButton,
+    copyButton,
   } = {
     multisigSection: getElement("multisigSection"),
     importDescriptorButton: getElement("importDescriptorButton"),
@@ -194,6 +189,7 @@ function extractXpubsAndPopulateRadioButtons() {
     messageInput: getElement("messageInput"),
     signatureInput: getElement("signatureInput"),
     evaluateSignatureButton: getElement("evaluateSignatureButton"),
+    copyButton: getElement("copyButton"),
   };
 
   try {
@@ -246,16 +242,21 @@ function extractXpubsAndPopulateRadioButtons() {
           showElement(messageInput, "inline-block");
           showElement(signatureInput, "inline-block");
           showElement(evaluateSignatureButton, "inline-block");
+          showElement(copyButton, "inline-block");
 
-          const messageInputValue =
-            document.getElementById("messageInput").value || "";
+          copyButton.addEventListener("click", async function () {
+            const messageInputValue =
+              document.getElementById("messageInput").value || "";
+            const textToCopy = `${messageInputValue}\nm${formattedPath}/0`;
 
-          showCopyButton(); // Display the copy button
-          copyButton.addEventListener("click", function () {
-            copyToClipboard(`${messageInputValue}\nm${formattedPath}/0`);
-            showCopySuccessNotification(); // Display copy success notification
+            try {
+              await navigator.clipboard.writeText(textToCopy);
+              console.log("Text successfully copied to clipboard");
+              showCopySuccessNotification(); // Display copy success notification
+            } catch (err) {
+              console.error("Unable to copy to clipboard", err);
+            }
           });
-
           // Clear the validation result when a new selection is made
           clearValidationStatement();
         }
