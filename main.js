@@ -143,13 +143,13 @@ window.onload = function () {
   const xpubRadioContainer = document.getElementById("xpubRadioContainer");
 };
 
-function copyToClipboard(text) {
-  const dummyElement = document.createElement("textarea");
-  dummyElement.value = text;
-  document.body.appendChild(dummyElement);
-  dummyElement.select();
-  document.execCommand("copy");
-  document.body.removeChild(dummyElement);
+async function copyToClipboard(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    console.log("Text successfully copied to clipboard");
+  } catch (err) {
+    console.error("Unable to copy to clipboard", err);
+  }
 }
 
 function showCopyButton() {
