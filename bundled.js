@@ -6321,28 +6321,6 @@ window.onload = function () {
   const xpubRadioContainer = document.getElementById("xpubRadioContainer");
 };
 
-function copyToClipboard(text) {
-  try {
-    navigator.clipboard
-      .writeText(text)
-      .then(() => {
-        console.log("Text successfully copied to clipboard");
-      })
-      .catch((err) => {
-        console.error("Unable to copy to clipboard", err);
-      });
-  } catch (err) {
-    console.error("Clipboard write is not supported", err);
-  }
-}
-
-function showCopyButton() {
-  const copyButton = document.getElementById("copyButton");
-  if (copyButton) {
-    copyButton.style.display = "inline-block";
-  }
-}
-
 function showCopySuccessNotification() {
   const copyNotification = document.getElementById("copyNotification");
   if (copyNotification) {
@@ -6350,6 +6328,32 @@ function showCopySuccessNotification() {
     setTimeout(() => {
       copyNotification.style.display = "none";
     }, 2000); // Hide the notification after 2 seconds
+  }
+}
+
+function generateExportText(selectedXpub) {
+  const messageInputValue = document.getElementById("messageInput").value || "";
+  const selectedEntry = associatedPathsAndXpubs.find(
+    (entry) => entry.xpub === selectedXpub
+  );
+  const formattedPath = selectedEntry ? selectedEntry.path : "unknown";
+
+  return `${messageInputValue}\nm${formattedPath}/0`;
+}
+
+function exportToFile() {
+  const textToExport = generateExportText(selectedXpub);
+
+  if (textToExport) {
+    const blob = new Blob([textToExport], { type: "text/plain" });
+    const a = document.createElement("a");
+    const fileName = "challenge.txt";
+
+    a.href = window.URL.createObjectURL(blob);
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   }
 }
 
@@ -6409,7 +6413,7 @@ function extractXpubsAndPopulateRadioButtons() {
       showElement(xpubRadioContainer, "inline-block");
 
       xpubRadioContainer.addEventListener("change", function (event) {
-        const selectedXpub = event.target.value;
+        selectedXpub = event.target.value;
         if (selectedXpub) {
           const selectedEntry = associatedPathsAndXpubs.find(
             (entry) => entry.xpub === selectedXpub
@@ -6435,9 +6439,7 @@ function extractXpubsAndPopulateRadioButtons() {
           showElement(copyButton, "inline-block");
 
           copyButton.addEventListener("click", async function () {
-            const messageInputValue =
-              document.getElementById("messageInput").value || "";
-            const textToCopy = `${messageInputValue}\nm${formattedPath}/0`;
+            const textToCopy = generateExportText(selectedXpub);
 
             try {
               await navigator.clipboard.writeText(textToCopy);
@@ -6447,6 +6449,7 @@ function extractXpubsAndPopulateRadioButtons() {
               console.error("Unable to copy to clipboard", err);
             }
           });
+
           // Clear the validation result when a new selection is made
           clearValidationStatement();
         }
@@ -6560,6 +6563,8 @@ document
 document
   .getElementById("importDescriptorButton")
   .addEventListener("click", importMultisigDescriptor);
+
+document.getElementById("exportButton").addEventListener("click", exportToFile);
 
 },{"./bitcoin-utils":27}],29:[function(require,module,exports){
 'use strict'
