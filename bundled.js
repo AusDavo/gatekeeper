@@ -6193,21 +6193,18 @@ const bitcoinUtils = require("./bitcoin-utils");
 const associatedPathsAndXpubs = [];
 let selectedXpub = null;
 
-function clearValidationStatement() {
+const clearValidationStatement = () => {
   document.getElementById("validationResult").textContent = "";
-}
+};
 
-document.body.addEventListener("input", function (event) {
-  if (
-    event.target.id === "messageInput" ||
-    event.target.id === "signatureInput"
-  ) {
+document.body.addEventListener("input", (event) => {
+  const { id } = event.target;
+  if (id === "messageInput" || id === "signatureInput") {
     clearValidationStatement();
   }
 });
 
 const fileInput = document.getElementById("fileInput");
-
 fileInput.addEventListener("change", handleFileUpload);
 
 function handleFileUpload(event) {
@@ -6219,10 +6216,7 @@ function handleFileUpload(event) {
     reader.onload = function (e) {
       const fileContent = e.target.result;
 
-      // Populate the multisigConfigInput with the content of the file
       document.getElementById("multisigConfigInput").value = fileContent;
-
-      // Trigger the logic as if the "Extract XPUBs" button was clicked
       extractXpubsAndPopulateRadioButtons();
     };
 
@@ -6232,21 +6226,21 @@ function handleFileUpload(event) {
   }
 }
 
-document
-  .getElementById("extractXpubsButton")
-  .addEventListener("click", function () {
-    extractXpubsAndPopulateRadioButtons(associatedPathsAndXpubs);
-  });
+document.getElementById("extractXpubsButton").addEventListener("click", () => {
+  extractXpubsAndPopulateRadioButtons(associatedPathsAndXpubs);
+});
+
 document
   .getElementById("importDescriptorButton")
   .addEventListener("click", importMultisigDescriptor);
+
 document
   .getElementById("evaluateSignatureButton")
-  .addEventListener("click", function () {
+  .addEventListener("click", () => {
     evaluateSignature(selectedXpub);
   });
 
-function logSignatureValidationResult(isValid, errorMessage) {
+const logSignatureValidationResult = (isValid, errorMessage) => {
   const resultElement = document.getElementById("validationResult");
 
   if (isValid) {
@@ -6254,7 +6248,7 @@ function logSignatureValidationResult(isValid, errorMessage) {
   } else {
     resultElement.textContent = errorMessage || "Signature is NOT valid!";
   }
-}
+};
 
 function extractPathsAndXpubsFromMultisigConfig(multisigConfig) {
   const pathsRegex = /\/[\dh'\/]+(?:[h'](?=\d)|[h'])/g;
@@ -6280,7 +6274,7 @@ function extractPathsAndXpubsFromMultisigConfig(multisigConfig) {
 }
 
 function populateXpubRadioLabels(xpubsAndFingerprints, container) {
-  container.innerHTML = ""; // Clear existing options
+  container.innerHTML = "";
 
   xpubsAndFingerprints.forEach((entry, index) => {
     const { xpub, xpubFingerprint } = entry;
@@ -6302,13 +6296,11 @@ function populateXpubRadioLabels(xpubsAndFingerprints, container) {
 
     container.appendChild(radioBtn);
     container.appendChild(label);
-
     container.appendChild(document.createElement("br"));
   });
 }
 
 window.onload = function () {
-  // Hide elements below xpub and the "Select xpub" dropdown when the page loads
   const hideElement = (elementId) => {
     const element = document.getElementById(elementId);
     if (element) {
@@ -6317,7 +6309,6 @@ window.onload = function () {
   };
 
   hideElement("elementsBelowXpub");
-  // Get reference to xpubRadioContainer
   const xpubRadioContainer = document.getElementById("xpubRadioContainer");
 };
 
@@ -6327,7 +6318,7 @@ function showCopySuccessNotification() {
     copyNotification.style.display = "inline-block";
     setTimeout(() => {
       copyNotification.style.display = "none";
-    }, 2000); // Hide the notification after 2 seconds
+    }, 2000);
   }
 }
 
@@ -6363,7 +6354,6 @@ function extractXpubsAndPopulateRadioButtons() {
   const showElement = (element, displayType = "inline-block") =>
     (element.style.display = displayType);
 
-  // Get reference to xpubRadioContainer
   const xpubRadioContainer = getElement("xpubRadioContainer");
 
   const {
@@ -6387,14 +6377,13 @@ function extractXpubsAndPopulateRadioButtons() {
   };
 
   try {
-    associatedPathsAndXpubs.length = 0; // Clear the existing array
+    associatedPathsAndXpubs.length = 0;
     associatedPathsAndXpubs.push(
       ...extractPathsAndXpubsFromMultisigConfig(multisigConfigInput.value)
     );
 
     showElement(importDescriptorButton, "inline-block");
 
-    // Dynamically create and populate radio buttons
     associatedPathsAndXpubs.forEach((entry, index) => {
       const radioBtn = document.createElement("input");
       radioBtn.type = "radio";
@@ -6407,7 +6396,6 @@ function extractXpubsAndPopulateRadioButtons() {
 
       xpubRadioContainer.appendChild(radioBtn);
       xpubRadioContainer.appendChild(label);
-
       xpubRadioContainer.appendChild(document.createElement("br"));
 
       showElement(xpubRadioContainer, "inline-block");
@@ -6444,24 +6432,22 @@ function extractXpubsAndPopulateRadioButtons() {
             try {
               await navigator.clipboard.writeText(textToCopy);
               console.log("Text successfully copied to clipboard");
-              showCopySuccessNotification(); // Display copy success notification
+              showCopySuccessNotification();
             } catch (err) {
               console.error("Unable to copy to clipboard", err);
             }
           });
 
-          // Clear the validation result when a new selection is made
           clearValidationStatement();
         }
       });
-    });
 
-    // Use the function to populate radio buttons and labels
-    populateXpubRadioLabels(associatedPathsAndXpubs, xpubRadioContainer);
+      populateXpubRadioLabels(associatedPathsAndXpubs, xpubRadioContainer);
+    });
   } catch (error) {
     console.error("Error during xpub extraction:", error.message);
   }
-  // Hide unnecessary elements after extracting XPubs
+
   hideElement(multisigSection);
 }
 
@@ -6485,20 +6471,13 @@ function importMultisigDescriptor() {
     importDescriptorButton: getById("importDescriptorButton"),
   };
 
-  // Show the original input, button, and label
   [multisigSection, extractXpubsButton].forEach((element) => show(element));
-
-  // Hide the elements below xpub and the "Select xpub" dropdown when importing
   [elementsBelowXpub, xpubRadioContainer, importDescriptorButton].forEach(hide);
 
-  // Clear the existing input value
   multisigConfigInput.value = "";
-
-  // Optionally, you can reset or hide other related elements as needed
 }
 
 function evaluateSignature() {
-  // Declare selectedXpub with a default value
   let selectedXpub = null;
 
   const getAddressFromXpub = (xpub) =>
@@ -6508,17 +6487,13 @@ function evaluateSignature() {
   const messageInputValue =
     document.getElementById("messageInput").value || "default";
 
-  // Find the selected radio button
   const selectedRadio = document.querySelector(
     'input[name="xpubRadio"]:checked'
   );
 
   try {
     if (selectedRadio) {
-      // Extract the index from the radio button's id
       const index = parseInt(selectedRadio.id.replace("xpubRadio", "")) - 1;
-
-      // Use the index to get the associated xpub from the stored array
       selectedXpub = associatedPathsAndXpubs[index].xpub;
     } else {
       throw new Error("No xpub selected");
@@ -6526,7 +6501,6 @@ function evaluateSignature() {
 
     const address = getAddressFromXpub(selectedXpub);
 
-    // Check if the signature is malformed or absent
     if (signatureInputValue.length === 0) {
       throw new Error("Signature is absent");
     } else if (signatureInputValue.length % 2 !== 0) {
@@ -6539,23 +6513,19 @@ function evaluateSignature() {
       address
     );
 
-    // Log the validation result with error message
     logSignatureValidationResult(isValid);
   } catch (error) {
     if (
       error.message === "Invalid signature length" ||
       error.message === "Signature is absent"
     ) {
-      // Provide user-friendly feedback for invalid signatures
       logSignatureValidationResult(false, error.message);
     } else {
-      // Handle other errors
       logSignatureValidationResult(false, "An unexpected error occurred.");
     }
   }
 }
 
-// Add an event listener to the "Evaluate Signature" button
 document
   .getElementById("evaluateSignatureButton")
   .addEventListener("click", evaluateSignature);
