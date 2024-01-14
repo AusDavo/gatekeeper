@@ -34,6 +34,10 @@ button:hover {
   background-color: #45a049;
 }
 
+#elementsBelowXpub {
+  display: none;
+}
+
 #multisigSection {
   display: inline-block;
 }
