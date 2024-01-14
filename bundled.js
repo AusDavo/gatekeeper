@@ -6197,15 +6197,11 @@ const clearValidationStatement = () => {
   document.getElementById("validationResult").textContent = "";
 };
 
-document.body.addEventListener("input", (event) => {
-  const { id } = event.target;
-  if (id === "messageInput" || id === "signatureInput") {
-    clearValidationStatement();
-  }
-});
+document.body.addEventListener("input", handleInput);
 
-const fileInput = document.getElementById("fileInput");
-fileInput.addEventListener("change", handleFileUpload);
+document
+  .getElementById("fileInput")
+  .addEventListener("change", handleFileUpload);
 
 function handleFileUpload(event) {
   const file = event.target.files[0];
@@ -6226,19 +6222,40 @@ function handleFileUpload(event) {
   }
 }
 
-document.getElementById("extractXpubsButton").addEventListener("click", () => {
-  extractXpubsAndPopulateRadioButtons(associatedPathsAndXpubs);
+const buttonIds = [
+  "extractXpubsButton",
+  "importDescriptorButton",
+  "evaluateSignatureButton",
+];
+buttonIds.forEach((buttonId) => {
+  document.getElementById(buttonId).addEventListener("click", () => {
+    handleButtonClick(buttonId);
+  });
 });
 
-document
-  .getElementById("importDescriptorButton")
-  .addEventListener("click", importMultisigDescriptor);
+document.getElementById("exportButton").addEventListener("click", exportToFile);
 
-document
-  .getElementById("evaluateSignatureButton")
-  .addEventListener("click", () => {
-    evaluateSignature(selectedXpub);
-  });
+function handleInput(event) {
+  const { id } = event.target;
+  if (id === "messageInput" || id === "signatureInput") {
+    clearValidationStatement();
+  }
+}
+
+function handleButtonClick(buttonId) {
+  switch (buttonId) {
+    case "extractXpubsButton":
+      extractXpubsAndPopulateRadioButtons(associatedPathsAndXpubs);
+      break;
+    case "importDescriptorButton":
+      importMultisigDescriptor();
+      break;
+    case "evaluateSignatureButton":
+      evaluateSignature(selectedXpub);
+      break;
+    // Add more cases as needed
+  }
+}
 
 const logSignatureValidationResult = (isValid, errorMessage) => {
   const resultElement = document.getElementById("validationResult");
@@ -6533,8 +6550,6 @@ document
 document
   .getElementById("importDescriptorButton")
   .addEventListener("click", importMultisigDescriptor);
-
-document.getElementById("exportButton").addEventListener("click", exportToFile);
 
 },{"./bitcoin-utils":27}],29:[function(require,module,exports){
 'use strict'
