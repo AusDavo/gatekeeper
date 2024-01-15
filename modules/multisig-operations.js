@@ -1,23 +1,30 @@
-// multisig-operations.js
 const bitcoinUtils = require("../bitcoin-utils");
 const uiInteraction = require("./ui-interaction");
 
 const associatedPathsAndXpubs = [];
 let selectedXpub = null;
 
+const pathsRegex = /\/[\dh'\/]+(?:[h'](?=\d)|[h'])/g;
+const xpubsRegex = /\b\w*xpub\w*\b/g;
+const xpubFingerprintRegex = /\b[A-Fa-f0-9]{8}\b/g;
+
+const extractMatches = (regex, input) =>
+  [...input.matchAll(regex)].map((match) => match[0]);
+
+const formatPath = (path) =>
+  (path.match(pathsRegex) || ["unknown"])[0].replace(/h/g, "'");
+
+const getElement = (id) => document.getElementById(id);
+const hideElement = (element) => (element.style.display = "none");
+const showElement = (element, displayType = "inline-block") =>
+  (element.style.display = displayType);
+
 const extractPathsAndXpubsFromMultisigConfig = (multisigConfig) => {
-  const pathsRegex = /\/[\dh'\/]+(?:[h'](?=\d)|[h'])/g;
-  const xpubsRegex = /\b\w*xpub\w*\b/g;
-  const xpubFingerprintRegex = /\b[A-Fa-f0-9]{8}\b/g;
-
-  const extractMatches = (regex) =>
-    [...multisigConfig.matchAll(regex)].map((match) => match[0]);
-
-  const formatPath = (path) =>
-    (path.match(pathsRegex) || ["unknown"])[0].replace(/h/g, "'");
-
-  return extractMatches(xpubsRegex).map((xpub, index) => {
-    const xpubFingerprints = extractMatches(xpubFingerprintRegex);
+  return extractMatches(xpubsRegex, multisigConfig).map((xpub, index) => {
+    const xpubFingerprints = extractMatches(
+      xpubFingerprintRegex,
+      multisigConfig
+    );
     const parts = multisigConfig.split(/\b\w*xpub\w*\b/);
 
     return {
@@ -28,59 +35,84 @@ const extractPathsAndXpubsFromMultisigConfig = (multisigConfig) => {
   });
 };
 
-function populateXpubRadioLabels(xpubsAndFingerprints, container) {
+const createRadioButton = (index, entry) => {
+  const radioBtn = document.createElement("input");
+  radioBtn.type = "radio";
+  radioBtn.name = "xpubRadio";
+  radioBtn.value = entry.xpub;
+  radioBtn.id = `xpubRadio${index + 1}`;
+
+  const label = document.createElement("label");
+  label.htmlFor = `xpubRadio${index + 1}`;
+
+  const shortXpub = `${entry.xpub.slice(0, 10)}...${entry.xpub.slice(-6)}`;
+  const fingerprintFormatted =
+    entry.xpubFingerprint !== "unknown"
+      ? ` (fingerprint: ${entry.xpubFingerprint})`
+      : "";
+
+  label.textContent = `${shortXpub}${fingerprintFormatted}`;
+
+  return { radioBtn, label };
+};
+
+const populateXpubRadioLabels = (xpubsAndFingerprints, container) => {
   container.innerHTML = "";
-
+  console.log("xpubsAndFingerprints:", xpubsAndFingerprints);
   xpubsAndFingerprints.forEach((entry, index) => {
-    const { xpub, xpubFingerprint } = entry;
-
-    const radioBtn = document.createElement("input");
-    radioBtn.type = "radio";
-    radioBtn.name = "xpubRadio";
-    radioBtn.value = xpub;
-    radioBtn.id = `xpubRadio${index + 1}`;
-
-    const label = document.createElement("label");
-    label.htmlFor = `xpubRadio${index + 1}`;
-
-    const shortXpub = `${xpub.slice(0, 10)}...${xpub.slice(-6)}`;
-    const fingerprintFormatted =
-      xpubFingerprint !== "unknown" ? ` (fingerprint: ${xpubFingerprint})` : "";
-
-    label.textContent = `${shortXpub}${fingerprintFormatted}`;
+    const { radioBtn, label } = createRadioButton(index, entry);
 
     container.appendChild(radioBtn);
     container.appendChild(label);
     container.appendChild(document.createElement("br"));
   });
-}
+};
+
+const handleXpubRadioChange = (event) => {
+  selectedXpub = event.target.value;
+  if (selectedXpub) {
+    const selectedEntry = associatedPathsAndXpubs.find(
+      (entry) => entry.xpub === selectedXpub
+    );
+    const formattedPath = selectedEntry ? selectedEntry.path : "unknown";
+
+    const selectedAddress = bitcoinUtils.deriveAddress(selectedXpub, 0).address;
+    derivationPathResult.innerHTML = `
+  The first child key of the selected xpub affords the following address:<br>
+  <strong>${selectedAddress}</strong><br>
+  Your collaborator can derive its corresponding private key from the BIP32 root key using this path:<br>
+  <strong>m${formattedPath}/0</strong><br>
+  Ask your collaborator to sign a new message using this key. Paste the returned signature below and click the button to evaluate it. A successful outcome indicates that your collaborator maintains control over their key.
+`;
+
+    showElement(elementsBelowXpub);
+    showElement(messageInput, "inline-block");
+    showElement(signatureInput, "inline-block");
+    showElement(evaluateSignatureButton, "inline-block");
+    showElement(copyButton, "inline-block");
+
+    copyButton.addEventListener("click", async function () {
+      const textToCopy = generateExportText(selectedXpub);
+
+      try {
+        await navigator.clipboard.writeText(textToCopy);
+        console.log("Text successfully copied to clipboard");
+        uiInteraction.showCopySuccessNotification();
+      } catch (err) {
+        console.error("Unable to copy to clipboard", err);
+      }
+    });
+
+    uiInteraction.clearValidationStatement();
+  }
+};
 
 function extractXpubsAndPopulateRadioButtons() {
-  const getElement = (id) => document.getElementById(id);
-  const hideElement = (element) => (element.style.display = "none");
-  const showElement = (element, displayType = "inline-block") =>
-    (element.style.display = displayType);
-
   const xpubRadioContainer = getElement("xpubRadioContainer");
 
-  const {
-    multisigSection,
-    importDescriptorButton,
-    elementsBelowXpub,
-    derivationPathResult,
-    messageInput,
-    signatureInput,
-    evaluateSignatureButton,
-    copyButton,
-  } = {
+  const { multisigSection, importDescriptorButton } = {
     multisigSection: getElement("multisigSection"),
     importDescriptorButton: getElement("importDescriptorButton"),
-    elementsBelowXpub: getElement("elementsBelowXpub"),
-    derivationPathResult: getElement("derivationPathResult"),
-    messageInput: getElement("messageInput"),
-    signatureInput: getElement("signatureInput"),
-    evaluateSignatureButton: getElement("evaluateSignatureButton"),
-    copyButton: getElement("copyButton"),
   };
 
   try {
@@ -107,48 +139,7 @@ function extractXpubsAndPopulateRadioButtons() {
 
       showElement(xpubRadioContainer, "inline-block");
 
-      xpubRadioContainer.addEventListener("change", function (event) {
-        selectedXpub = event.target.value;
-        if (selectedXpub) {
-          const selectedEntry = associatedPathsAndXpubs.find(
-            (entry) => entry.xpub === selectedXpub
-          );
-          const formattedPath = selectedEntry ? selectedEntry.path : "unknown";
-
-          const selectedAddress = bitcoinUtils.deriveAddress(
-            selectedXpub,
-            0
-          ).address;
-          derivationPathResult.innerHTML = `
-  The first child key of the selected xpub affords the following address:<br>
-  <strong>${selectedAddress}</strong><br>
-  Your collaborator can derive its corresponding private key from the BIP32 root key using this path:<br>
-  <strong>m${formattedPath}/0</strong><br>
-  Ask your collaborator to sign a new message using this key. Paste the returned signature below and click the button to evaluate it. A successful outcome indicates that your collaborator maintains control over their key.
-`;
-
-          showElement(elementsBelowXpub);
-          showElement(messageInput, "inline-block");
-          showElement(signatureInput, "inline-block");
-          showElement(evaluateSignatureButton, "inline-block");
-          showElement(copyButton, "inline-block");
-
-          copyButton.addEventListener("click", async function () {
-            const textToCopy = generateExportText(selectedXpub);
-
-            try {
-              await navigator.clipboard.writeText(textToCopy);
-              console.log("Text successfully copied to clipboard");
-              uiInteraction.showCopySuccessNotification();
-            } catch (err) {
-              console.error("Unable to copy to clipboard", err);
-            }
-          });
-
-          uiInteraction.clearValidationStatement();
-        }
-      });
-
+      xpubRadioContainer.addEventListener("change", handleXpubRadioChange);
       populateXpubRadioLabels(associatedPathsAndXpubs, xpubRadioContainer);
     });
   } catch (error) {
