@@ -1,10 +1,10 @@
 const eventListeners = require("./modules/event-listeners");
-// const initialization = require("./modules/initialization");
+const initialization = require("./modules/initialization");
 
 // ... (Any other global variables or configurations)
 
 // // Initialization
-// initialization.initialize();
+initialization.initialize();
 
 // Event Listeners
 eventListeners.addEventListeners();

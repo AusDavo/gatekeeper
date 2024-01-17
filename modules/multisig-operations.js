@@ -54,7 +54,6 @@ const createRadioButton = (index, entry) => {
 
 const populateXpubRadioLabels = (xpubsAndFingerprints, container) => {
   container.innerHTML = "";
-  console.log("xpubsAndFingerprints:", xpubsAndFingerprints);
   xpubsAndFingerprints.forEach((entry, index) => {
     const { radioBtn, label } = createRadioButton(index, entry);
 
