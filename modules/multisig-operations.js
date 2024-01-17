@@ -20,19 +20,15 @@ const showElement = (element, displayType = "inline-block") =>
   (element.style.display = displayType);
 
 const extractPathsAndXpubsFromMultisigConfig = (multisigConfig) => {
-  return extractMatches(xpubsRegex, multisigConfig).map((xpub, index) => {
-    const xpubFingerprints = extractMatches(
-      xpubFingerprintRegex,
-      multisigConfig
-    );
-    const parts = multisigConfig.split(/\b\w*xpub\w*\b/);
+  const xpubs = extractMatches(xpubsRegex, multisigConfig);
+  const xpubFingerprints = extractMatches(xpubFingerprintRegex, multisigConfig);
+  const parts = multisigConfig.split(/\b\w*xpub\w*\b/);
 
-    return {
-      path: formatPath(parts[index]),
-      xpub,
-      xpubFingerprint: xpubFingerprints[index] || "unknown",
-    };
-  });
+  return xpubs.map((xpub, index) => ({
+    path: formatPath(parts[index]),
+    xpub,
+    xpubFingerprint: xpubFingerprints[index] || "unknown",
+  }));
 };
 
 const createRadioButton = (index, entry) => {
@@ -137,7 +133,7 @@ function extractXpubsAndPopulateRadioButtons() {
       xpubRadioContainer.appendChild(label);
       xpubRadioContainer.appendChild(document.createElement("br"));
 
-      showElement(xpubRadioContainer, "inline-block");
+      showElement(xpubRadioContainer, "block");
 
       xpubRadioContainer.addEventListener("change", handleXpubRadioChange);
       populateXpubRadioLabels(associatedPathsAndXpubs, xpubRadioContainer);
