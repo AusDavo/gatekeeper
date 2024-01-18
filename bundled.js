@@ -6430,7 +6430,6 @@ function extractXpubsAndPopulateRadioButtons() {
 }
 
 function importMultisigDescriptor() {
-  const getById = (id) => document.getElementById(id);
   const show = (element, displayType = "inline-block") =>
     (element.style.display = displayType);
   const hide = (element) => (element.style.display = "none");
@@ -6442,11 +6441,11 @@ function importMultisigDescriptor() {
     xpubRadioContainer,
     importDescriptorButton,
   } = {
-    multisigSection: getById("multisigSection"),
-    extractXpubsButton: getById("extractXpubsButton"),
-    elementsBelowXpub: getById("elementsBelowXpub"),
-    xpubRadioContainer: getById("xpubRadioContainer"),
-    importDescriptorButton: getById("importDescriptorButton"),
+    multisigSection: getElement("multisigSection"),
+    extractXpubsButton: getElement("extractXpubsButton"),
+    elementsBelowXpub: getElement("elementsBelowXpub"),
+    xpubRadioContainer: getElement("xpubRadioContainer"),
+    importDescriptorButton: getElement("importDescriptorButton"),
   };
 
   [multisigSection, extractXpubsButton].forEach((element) => show(element));
@@ -6456,7 +6455,7 @@ function importMultisigDescriptor() {
 }
 
 const logSignatureValidationResult = (isValid, errorMessage) => {
-  const resultElement = document.getElementById("validationResult");
+  const resultElement = getElement("validationResult");
 
   if (isValid) {
     resultElement.textContent = "Signature is valid!";
@@ -6471,9 +6470,8 @@ function evaluateSignature() {
   const getAddressFromXpub = (xpub) =>
     bitcoinUtils.deriveAddress(xpub, 0).address;
 
-  const signatureInputValue = document.getElementById("signatureInput").value;
-  const messageInputValue =
-    document.getElementById("messageInput").value || "default";
+  const signatureInputValue = getElement("signatureInput").value;
+  const messageInputValue = getElement("messageInput").value || "default";
 
   const selectedRadio = document.querySelector(
     'input[name="xpubRadio"]:checked'
@@ -6515,7 +6513,7 @@ function evaluateSignature() {
 }
 
 function generateExportText(selectedXpub) {
-  const messageInputValue = document.getElementById("messageInput").value || "";
+  const messageInputValue = getElement("messageInput").value || "";
   const selectedEntry = associatedPathsAndXpubs.find(
     (entry) => entry.xpub === selectedXpub
   );
