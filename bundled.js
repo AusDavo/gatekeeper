@@ -6300,9 +6300,18 @@ const formatPath = (path) =>
   (path.match(pathsRegex) || ["unknown"])[0].replace(/h/g, "'");
 
 const getElement = (id) => document.getElementById(id);
-const hideElement = (element) => (element.style.display = "none");
-const showElement = (element, displayType = "inline-block") =>
-  (element.style.display = displayType);
+
+function showElements(elementsToShow, displayType = "inline-block") {
+  (Array.isArray(elementsToShow) ? elementsToShow : [elementsToShow]).forEach(
+    (element) => (element.style.display = displayType)
+  );
+}
+
+function hideElements(elementsToHide) {
+  (Array.isArray(elementsToHide) ? elementsToHide : [elementsToHide]).forEach(
+    (element) => (element.style.display = "none")
+  );
+}
 
 const extractPathsAndXpubsFromMultisigConfig = (multisigConfig) => {
   const xpubs = extractMatches(xpubsRegex, multisigConfig);
@@ -6365,11 +6374,11 @@ const handleXpubRadioChange = (event) => {
   Ask your collaborator to sign a new message using this key. Paste the returned signature below and click the button to evaluate it. A successful outcome indicates that your collaborator maintains control over their key.
 `;
 
-    showElement(elementsBelowXpub);
-    showElement(messageInput, "inline-block");
-    showElement(signatureInput, "inline-block");
-    showElement(evaluateSignatureButton, "inline-block");
-    showElement(copyButton, "inline-block");
+    showElements(elementsBelowXpub);
+    showElements(messageInput, "inline-block");
+    showElements(signatureInput, "inline-block");
+    showElements(evaluateSignatureButton, "inline-block");
+    showElements(copyButton, "inline-block");
 
     copyButton.addEventListener("click", async function () {
       const textToCopy = generateExportText(selectedXpub);
@@ -6401,7 +6410,7 @@ function extractXpubsAndPopulateRadioButtons() {
       ...extractPathsAndXpubsFromMultisigConfig(multisigConfigInput.value)
     );
 
-    showElement(importDescriptorButton, "inline-block");
+    showElements(importDescriptorButton, "inline-block");
 
     associatedPathsAndXpubs.forEach((entry, index) => {
       const radioBtn = document.createElement("input");
@@ -6417,7 +6426,7 @@ function extractXpubsAndPopulateRadioButtons() {
       xpubRadioContainer.appendChild(label);
       xpubRadioContainer.appendChild(document.createElement("br"));
 
-      showElement(xpubRadioContainer, "block");
+      showElements(xpubRadioContainer, "block");
 
       xpubRadioContainer.addEventListener("change", handleXpubRadioChange);
       populateXpubRadioLabels(associatedPathsAndXpubs, xpubRadioContainer);
@@ -6426,14 +6435,10 @@ function extractXpubsAndPopulateRadioButtons() {
     console.error("Error during xpub extraction:", error.message);
   }
 
-  hideElement(multisigSection);
+  hideElements(multisigSection);
 }
 
 function importMultisigDescriptor() {
-  const show = (element, displayType = "inline-block") =>
-    (element.style.display = displayType);
-  const hide = (element) => (element.style.display = "none");
-
   const {
     multisigSection,
     extractXpubsButton,
@@ -6448,8 +6453,8 @@ function importMultisigDescriptor() {
     importDescriptorButton: getElement("importDescriptorButton"),
   };
 
-  [multisigSection, extractXpubsButton].forEach((element) => show(element));
-  [elementsBelowXpub, xpubRadioContainer, importDescriptorButton].forEach(hide);
+  showElements([multisigSection, extractXpubsButton]);
+  hideElements([elementsBelowXpub, xpubRadioContainer, importDescriptorButton]);
 
   multisigConfigInput.value = "";
 }
