@@ -6301,7 +6301,7 @@ const formatPath = (path) =>
 
 const getElement = (id) => document.getElementById(id);
 
-function showElements(elementsToShow, displayType = "inline-block") {
+function showElements(elementsToShow, displayType = "flex") {
   (Array.isArray(elementsToShow) ? elementsToShow : [elementsToShow]).forEach(
     (element) => (element.style.display = displayType)
   );
@@ -6375,10 +6375,10 @@ const handleXpubRadioChange = (event) => {
 `;
 
     showElements(elementsBelowXpub);
-    showElements(messageInput, "inline-block");
-    showElements(signatureInput, "inline-block");
-    showElements(evaluateSignatureButton, "inline-block");
-    showElements(copyButton, "inline-block");
+    // showElements(messageInput);
+    // showElements(signatureInput);
+    // showElements(evaluateSignatureButton);
+    showElements(copyButton, "flex");
 
     copyButton.addEventListener("click", async function () {
       const textToCopy = generateExportText(selectedXpub);
@@ -6410,7 +6410,7 @@ function extractXpubsAndPopulateRadioButtons() {
       ...extractPathsAndXpubsFromMultisigConfig(multisigConfigInput.value)
     );
 
-    showElements(importDescriptorButton, "inline-block");
+    showElements(importDescriptorButton);
 
     associatedPathsAndXpubs.forEach((entry, index) => {
       const radioBtn = document.createElement("input");
@@ -6426,7 +6426,7 @@ function extractXpubsAndPopulateRadioButtons() {
       xpubRadioContainer.appendChild(label);
       xpubRadioContainer.appendChild(document.createElement("br"));
 
-      showElements(xpubRadioContainer, "block");
+      showElements(xpubRadioContainer);
 
       xpubRadioContainer.addEventListener("change", handleXpubRadioChange);
       populateXpubRadioLabels(associatedPathsAndXpubs, xpubRadioContainer);
