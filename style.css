@@ -1,5 +1,22 @@
+:root {
+  --font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  --input-font-size: 14px;
+  --button-font-size: 16px;
+  --button-padding: 8px 12px;
+  --button-border-radius: 4px;
+  --button-transition: background-color 0.3s ease;
+}
+
+body,
+textarea,
+input,
+button,
+button[id$="Button"],
+label {
+  font-family: var(--font-family);
+}
+
 body {
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   background-color: #f8f8f8;
   color: #333;
   display: flex;
@@ -8,18 +25,22 @@ body {
 }
 
 #heading,
-#multisigSection {
+#multisigSection,
+#elementsBelowXpub,
+#xpubRadioContainer {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: left;
+}
+
+#buttonHolder {
+  display: flex;
+  flex: space-between;
 }
 
 textarea,
 input {
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  font-size: 14px; /* Adjust the font size as needed */
-  width: 100%;
+  font-size: var(--input-font-size);
   padding: 10px;
   margin-bottom: 10px;
   box-sizing: border-box;
@@ -27,57 +48,80 @@ input {
   border-radius: 5px;
 }
 
-button {
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  font-size: 16px; /* Adjust the font size as needed */
+button,
+button[id$="Button"] {
+  font-size: var(--button-font-size);
   background-color: #4caf50;
   color: white;
-  padding: 8px 12px;
+  padding: var(--button-padding);
   border: none;
-  border-radius: 4px;
+  border-radius: var(--button-border-radius);
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: var(--button-transition);
+  width: fit-content;
 }
 
-button:hover {
+button:hover,
+button[id$="Button"]:hover {
   background-color: #45a049;
 }
 
-button:focus {
+button:focus,
+button[id$="Button"]:focus {
   outline: none;
 }
 
-button:active {
+button:active,
+button[id$="Button"]:active {
   background-color: #388e3c;
 }
 
-#elementsBelowXpub {
+#elementsBelowXpub,
+#importDescriptorButton {
   display: none;
-  flex-direction: column;
-  align-items: center;
   width: 100%;
   max-width: 45ch;
 }
 
 #buttonHolder {
   display: flex;
-  justify-content: flex-start;
-  max-width: 50ch;
-  width: 100%;
+  justify-content: space-between;
+  /*! max-width: 50ch; */
+  /*! width: 100%; */
+  /*! padding: 2ch; */
+}
+
+#copyNotification {
+  display: none;
+}
+
+#copyButton {
+  display: inline-block;
 }
 
 #buttonHolder button {
-  margin-right: 2ch;
+  /*! margin-right: 2ch; */
+}
+
+#messageInputContainer,
+#signatureInputContainer {
+  width: 100%;
+}
+
+#messageInput,
+#signatureInput {
+  width: 75%;
 }
 
 #validationResult {
   margin-top: 20px;
-  font-size: 16px; /* Adjust the font size as needed */
+  font-size: var(--button-font-size);
   font-weight: bold;
   color: #e74c3c;
 }
 
-#importDescriptorContainer {
+#importDescriptorContainer,
+#xpubRadioContainer {
   margin-top: 20px;
 }
 
@@ -87,28 +131,14 @@ button:active {
   width: 90%;
 }
 
-#importDescriptorButton {
+#uploadContainer {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+#fileInput {
   display: none;
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  background-color: #3498db;
-  color: white;
-  padding: 8px 12px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-#importDescriptorButton:hover {
-  background-color: #2980b9;
-}
-
-#importDescriptorButton:focus {
-  outline: none;
-}
-
-#importDescriptorButton:active {
-  background-color: #1f618d;
 }
 
 #uploadContainer {
@@ -140,10 +170,6 @@ button:active {
   background-color: #1f618d;
 }
 
-#fileInput {
-  display: none;
-}
-
 #fileName {
   margin-left: 10px;
   color: #555;
@@ -153,17 +179,7 @@ input[type="radio"] {
   display: none;
 }
 
-#xpubRadioContainer {
-  margin-top: 10px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 100%;
-  max-width: 45ch;
-}
-
 #xpubRadioContainer label {
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   display: inline-block;
   padding: 10px;
   margin: 5px;
@@ -171,7 +187,7 @@ input[type="radio"] {
   color: white;
   border-radius: 5px;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: var(--button-transition);
 }
 
 #xpubRadioContainer label:hover {

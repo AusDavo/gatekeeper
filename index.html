@@ -39,33 +39,31 @@
         <div id="derivationPathResult"></div>
       </section>
 
-      <section>
+      <section id="messageInputContainer">
         <label for="messageInput">Enter Message:</label>
-        <input type="text" id="messageInput" />
+
+        <section id="buttonHolder">
+          <input type="text" id="messageInput" />
+          <button id="copyButton" title="Copy Message and Derivation Path">
+            <i class="fa-regular fa-copy"></i>
+          </button>
+
+          <span id="copyNotification">Copied!</span>
+
+          <button
+            id="exportButton"
+            title="Export Message and Derivation Path as a .txt file"
+          >
+            <i class="fa-solid fa-file-export"></i>
+          </button>
+        </section>
       </section>
 
-      <section id="buttonHolder">
-        <button
-          id="copyButton"
-          style="display: none"
-          title="Copy Message and Derivation Path"
-        >
-          <i class="fa-regular fa-copy"></i> Copy
-        </button>
-
-        <span id="copyNotification" style="display: none">Copied!</span>
-
-        <button
-          id="exportButton"
-          title="Export Message and Derivation Path as a .txt file"
-        >
-          <i class="fa-solid fa-file-export"></i> Export
-        </button>
-      </section>
-
-      <section>
+      <section id="signatureInputContainer">
         <label for="signatureInput">Enter Signature:</label>
-        <input type="text" id="signatureInput" />
+        <section id="buttonHolder">
+          <input type="text" id="signatureInput" />
+        </section>
         <button id="evaluateSignatureButton">Evaluate signature</button>
       </section>
 
