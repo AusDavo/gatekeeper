@@ -12,7 +12,8 @@ textarea,
 input,
 button,
 button[id$="Button"],
-label {
+label,
+footer {
   font-family: var(--font-family);
 }
 
@@ -197,4 +198,39 @@ input[type="radio"] {
 #xpubRadioContainer input[type="radio"]:checked + label {
   background-color: #3d6e2e;
   border: 2px solid #e74c3c;
+}
+
+footer {
+  margin-top: 20px;
+  text-align: center;
+}
+
+footer p {
+  margin: 5px;
+}
+
+footer a {
+  color: #3498db;
+  text-decoration: none;
+}
+
+footer a:hover {
+  text-decoration: underline;
+}
+
+#qr-code-img {
+  opacity: 0;
+  visibility: hidden;
+  width: 300px; /* Set a fixed width */
+  height: 300px; /* Set a fixed height */
+  position: fixed; /* Position the image fixed on the viewport */
+  top: 0; /* Position at the top of the viewport */
+  left: 50%; /* Center horizontally */
+  transform: translateX(-50%); /* Center horizontally using transform */
+  transition: opacity 0.3s ease;
+}
+
+#donationLink:hover ~ #qr-code-img {
+  opacity: 1;
+  visibility: visible;
 }
