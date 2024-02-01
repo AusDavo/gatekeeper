@@ -221,12 +221,14 @@ footer a:hover {
 #qr-code-img {
   opacity: 0;
   visibility: hidden;
-  width: 300px; /* Set a fixed width */
-  height: 300px; /* Set a fixed height */
-  position: fixed; /* Position the image fixed on the viewport */
-  top: 0; /* Position at the top of the viewport */
-  left: 50%; /* Center horizontally */
-  transform: translateX(-50%); /* Center horizontally using transform */
+  max-width: 300px; /* Maximum width of 300px */
+  max-height: 300px; /* Maximum height of 300px */
+  width: auto; /* Ensure aspect ratio is maintained */
+  height: auto; /* Ensure aspect ratio is maintained */
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
   transition: opacity 0.3s ease;
 }
 
