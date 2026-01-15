@@ -130,8 +130,8 @@ function validateSignature(message, signature, address, signatureFormat) {
     case SIGNATURE_FORMATS.electrum:
     default:
       // Standard Electrum format using bitcoinjs-message
-      const decodedSignature = base64UrlDecode(signature);
-      return bitcoinMessage.verify(message, address, decodedSignature);
+      // Pass signature string directly - library handles base64 decoding
+      return bitcoinMessage.verify(message, address, signature);
   }
 }
 
