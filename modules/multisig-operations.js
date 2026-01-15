@@ -74,8 +74,27 @@ const populateXpubRadioLabels = (xpubsAndFingerprints, container) => {
 
 function getDerivationSettings() {
   const addressType = getElement("addressTypeSelect").value;
-  const childIndex = parseInt(getElement("childIndexInput").value, 10) || 0;
-  return { addressType, childIndex };
+  const relativePath = getElement("relativePathInput").value.trim();
+  return { addressType, relativePath };
+}
+
+function updateTaprootWarning(addressType) {
+  const warning = getElement("taprootWarning");
+  const signatureSection = getElement("signatureInputContainer");
+  const evaluateButton = getElement("evaluateSignatureButton");
+
+  if (addressType === "taproot") {
+    warning.classList.add("visible");
+    // Disable signature verification for taproot
+    signatureSection.style.opacity = "0.5";
+    evaluateButton.disabled = true;
+    evaluateButton.title = "Taproot signature verification not supported";
+  } else {
+    warning.classList.remove("visible");
+    signatureSection.style.opacity = "1";
+    evaluateButton.disabled = false;
+    evaluateButton.title = "";
+  }
 }
 
 function updateDerivationDisplay() {
@@ -84,36 +103,77 @@ function updateDerivationDisplay() {
   const selectedEntry = associatedPathsAndXpubs.find(
     (entry) => entry.xpub === selectedXpub
   );
-  const formattedPath = selectedEntry ? selectedEntry.path : "unknown";
-  const { addressType, childIndex } = getDerivationSettings();
+  const basePath = selectedEntry ? selectedEntry.path : "unknown";
+  const { addressType, relativePath } = getDerivationSettings();
 
-  const selectedAddress = bitcoinUtils.deriveAddress(
-    selectedXpub,
-    childIndex,
-    addressType
-  ).address;
+  // Update taproot warning visibility
+  updateTaprootWarning(addressType);
 
-  const addressTypeLabel =
-    addressType === "segwit" ? "Native SegWit (P2WPKH)" : "Legacy (P2PKH)";
+  try {
+    const result = bitcoinUtils.deriveAddress(
+      selectedXpub,
+      relativePath,
+      addressType
+    );
 
-  const derivationPathResult = getElement("derivationPathResult");
-  derivationPathResult.innerHTML = `
-    <strong>${addressTypeLabel}</strong> address at child index <strong>${childIndex}</strong>:<br>
-    <strong>${selectedAddress}</strong><br>
-    Your collaborator can derive its corresponding private key from the BIP32 root key using this path:<br>
-    <strong>m${formattedPath}/${childIndex}</strong><br>
-    Ask your collaborator to sign a message using this key. Paste the returned signature below to verify.
-  `;
+    const addressTypeLabels = {
+      legacy: "Legacy (P2PKH)",
+      segwit: "Native SegWit (P2WPKH)",
+      taproot: "Taproot (P2TR)",
+    };
+
+    // Build full path display
+    const fullPath = relativePath
+      ? `m${basePath}/${relativePath}`
+      : `m${basePath}`;
+
+    const derivationPathResult = getElement("derivationPathResult");
+    derivationPathResult.innerHTML = `
+      <div class="path-info">
+        <span class="path-label">Base path from descriptor:</span>
+        <strong>m${basePath}</strong>
+      </div>
+      <div class="path-info">
+        <span class="path-label">Full derivation path:</span>
+        <strong>${fullPath}</strong>
+      </div>
+      <div class="path-info">
+        <span class="path-label">${addressTypeLabels[addressType]} address:</span>
+        <strong class="address">${result.address}</strong>
+      </div>
+      <p class="instructions">
+        Ask your collaborator to sign a message using the private key at this path, then paste the signature below to verify.
+      </p>
+    `;
+
+    derivationPathResult.classList.remove("error");
+  } catch (error) {
+    const derivationPathResult = getElement("derivationPathResult");
+    derivationPathResult.innerHTML = `
+      <div class="error-message">
+        <i class="fa-solid fa-circle-exclamation"></i>
+        ${error.message}
+      </div>
+    `;
+    derivationPathResult.classList.add("error");
+  }
 
   uiInteraction.clearValidationStatement();
 }
 
 function setupDerivationControlListeners() {
   const addressTypeSelect = getElement("addressTypeSelect");
-  const childIndexInput = getElement("childIndexInput");
+  const relativePathInput = getElement("relativePathInput");
 
-  addressTypeSelect.addEventListener("change", updateDerivationDisplay);
-  childIndexInput.addEventListener("input", updateDerivationDisplay);
+  // Remove old listeners by cloning
+  const newAddressSelect = addressTypeSelect.cloneNode(true);
+  const newPathInput = relativePathInput.cloneNode(true);
+
+  addressTypeSelect.parentNode.replaceChild(newAddressSelect, addressTypeSelect);
+  relativePathInput.parentNode.replaceChild(newPathInput, relativePathInput);
+
+  newAddressSelect.addEventListener("change", updateDerivationDisplay);
+  newPathInput.addEventListener("input", updateDerivationDisplay);
 }
 
 const handleXpubRadioChange = (event) => {
@@ -121,8 +181,8 @@ const handleXpubRadioChange = (event) => {
   if (selectedXpub) {
     showElements(getElement("elementsBelowXpub"));
     showElements(getElement("copyButton"), "flex");
-    updateDerivationDisplay();
     setupDerivationControlListeners();
+    updateDerivationDisplay();
 
     const copyButton = getElement("copyButton");
     copyButton.onclick = async function () {
@@ -189,7 +249,8 @@ function importMultisigDescriptor() {
   selectedXpub = null;
   multisigConfigInput.value = "";
   getElement("addressTypeSelect").value = "legacy";
-  getElement("childIndexInput").value = "0";
+  getElement("relativePathInput").value = "0/0";
+  getElement("taprootWarning").classList.remove("visible");
 }
 
 const logSignatureValidationResult = (isValid, errorMessage) => {
@@ -205,10 +266,7 @@ const logSignatureValidationResult = (isValid, errorMessage) => {
 };
 
 function evaluateSignature() {
-  const { addressType, childIndex } = getDerivationSettings();
-
-  const getAddressFromXpub = (xpub) =>
-    bitcoinUtils.deriveAddress(xpub, childIndex, addressType).address;
+  const { addressType, relativePath } = getDerivationSettings();
 
   const signatureInputValue = getElement("signatureInput").value;
   const messageInputValue = getElement("messageInput").value || "default";
@@ -226,30 +284,26 @@ function evaluateSignature() {
       throw new Error("No xpub selected");
     }
 
-    const address = getAddressFromXpub(currentXpub);
+    const result = bitcoinUtils.deriveAddress(
+      currentXpub,
+      relativePath,
+      addressType
+    );
 
     if (signatureInputValue.length === 0) {
       throw new Error("Signature is absent");
-    } else if (signatureInputValue.length % 2 !== 0) {
-      throw new Error("Invalid signature length");
     }
 
     const isValid = bitcoinUtils.validateSignature(
       messageInputValue,
       signatureInputValue,
-      address
+      result.address,
+      addressType
     );
 
     logSignatureValidationResult(isValid);
   } catch (error) {
-    if (
-      error.message === "Invalid signature length" ||
-      error.message === "Signature is absent"
-    ) {
-      logSignatureValidationResult(false, error.message);
-    } else {
-      logSignatureValidationResult(false, "An unexpected error occurred.");
-    }
+    logSignatureValidationResult(false, error.message);
   }
 }
 
@@ -258,10 +312,14 @@ function generateExportText(xpub) {
   const selectedEntry = associatedPathsAndXpubs.find(
     (entry) => entry.xpub === xpub
   );
-  const formattedPath = selectedEntry ? selectedEntry.path : "unknown";
-  const { childIndex } = getDerivationSettings();
+  const basePath = selectedEntry ? selectedEntry.path : "unknown";
+  const { relativePath } = getDerivationSettings();
 
-  return `${messageInputValue}\nm${formattedPath}/${childIndex}`;
+  const fullPath = relativePath
+    ? `m${basePath}/${relativePath}`
+    : `m${basePath}`;
+
+  return `${messageInputValue}\n${fullPath}`;
 }
 
 function exportToFile() {

@@ -48,12 +48,18 @@
             <select id="addressTypeSelect">
               <option value="legacy">Legacy (P2PKH) - 1...</option>
               <option value="segwit">Native SegWit (P2WPKH) - bc1q...</option>
+              <option value="taproot">Taproot (P2TR) - bc1p...</option>
             </select>
           </div>
-          <div id="childIndexContainer">
-            <label for="childIndexInput">Child Index</label>
-            <input type="number" id="childIndexInput" value="0" min="0" max="2147483647" />
+          <div id="relativePathContainer">
+            <label for="relativePathInput">Relative Path</label>
+            <input type="text" id="relativePathInput" value="0/0" placeholder="e.g., 0/0 or 1/5" />
           </div>
+        </div>
+
+        <div id="taprootWarning">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+          Taproot uses Schnorr signatures (BIP-340). Standard message signing verification is not supported for Taproot addresses.
         </div>
 
         <div id="derivationPathResult"></div>
