@@ -2,6 +2,7 @@
 const ecc = require("@bitcoinerlab/secp256k1");
 const { BIP32Factory } = require("bip32");
 const bitcoin = require("bitcoinjs-lib");
+const bitcoinMessage = require("bitcoinjs-message");
 const { Verifier } = require("bip322-js");
 
 // Initialize BIP32 with the secp256k1 library
@@ -14,17 +15,29 @@ const ADDRESS_TYPES = {
 };
 
 const SIGNATURE_FORMATS = {
-  electrum: "electrum", // Standard/Electrum format
-  bip137: "bip137", // BIP-137 (Trezor) format
-  bip322: "bip322", // BIP-322 (Simple) format
+  electrum: "electrum", // Standard/Electrum format (ECDSA)
+  bip137: "bip137", // BIP-137 (Trezor) format (ECDSA with address type header)
+  bip322: "bip322", // BIP-322 (Simple) format (works with all address types)
 };
+
+/**
+ * Detects the address type from a Bitcoin address string.
+ */
+function detectAddressType(address) {
+  if (address.startsWith("bc1p") || address.startsWith("tb1p")) {
+    return ADDRESS_TYPES.taproot;
+  } else if (address.startsWith("bc1q") || address.startsWith("tb1q")) {
+    return ADDRESS_TYPES.segwit;
+  } else if (address.startsWith("3") || address.startsWith("2")) {
+    return "segwit-wrapped"; // P2SH-P2WPKH
+  } else {
+    return ADDRESS_TYPES.legacy; // P2PKH (starts with 1 or m/n for testnet)
+  }
+}
 
 /**
  * Derives a child node from an xpub using a relative path.
  * Only non-hardened derivation is possible from an xpub.
- * @param {string} xpub - The extended public key
- * @param {string} relativePath - Path like "0/0" or "1/5" (no leading slash)
- * @returns {object} - The derived BIP32 node
  */
 function deriveFromPath(xpub, relativePath) {
   const node = bip32.fromBase58(xpub);
@@ -33,12 +46,10 @@ function deriveFromPath(xpub, relativePath) {
     return node;
   }
 
-  // Parse and validate path segments
   const segments = relativePath.split("/").filter((s) => s !== "");
 
   let derived = node;
   for (const segment of segments) {
-    // Check for hardened derivation attempt (not possible from xpub)
     if (segment.includes("'") || segment.includes("h")) {
       throw new Error(
         "Hardened derivation not possible from xpub. Use only non-hardened indices."
@@ -58,8 +69,6 @@ function deriveFromPath(xpub, relativePath) {
 
 /**
  * Converts a 33-byte public key to x-only (32-byte) format for Taproot.
- * @param {Buffer} pubkey - 33-byte compressed public key
- * @returns {Buffer} - 32-byte x-only public key
  */
 function toXOnly(pubkey) {
   return pubkey.subarray(1, 33);
@@ -67,10 +76,6 @@ function toXOnly(pubkey) {
 
 /**
  * Derives an address from an xpub at a given relative path.
- * @param {string} xpub - The extended public key
- * @param {string} relativePath - Relative derivation path (e.g., "0/0")
- * @param {string} addressType - One of: legacy, segwit, taproot
- * @returns {object} - { address, publicKey }
  */
 function deriveAddress(xpub, relativePath, addressType = ADDRESS_TYPES.legacy) {
   const derived = deriveFromPath(xpub, relativePath);
@@ -79,7 +84,6 @@ function deriveAddress(xpub, relativePath, addressType = ADDRESS_TYPES.legacy) {
   let payment;
   switch (addressType) {
     case ADDRESS_TYPES.taproot:
-      // Taproot requires x-only public key (32 bytes)
       payment = bitcoin.payments.p2tr({
         internalPubkey: toXOnly(publicKey),
       });
@@ -100,45 +104,44 @@ function deriveAddress(xpub, relativePath, addressType = ADDRESS_TYPES.legacy) {
 }
 
 /**
- * Decodes a base64url-encoded signature to a Buffer.
- */
-function base64UrlDecode(base64Url) {
-  const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
-  return Buffer.from(base64, "base64");
-}
-
-/**
  * Validates a Bitcoin signed message using the specified format.
  *
- * @param {string} message - The original message
- * @param {string} signature - Base64-encoded signature
- * @param {string} address - The Bitcoin address
- * @param {string} signatureFormat - One of: electrum, bip137, bip322
- * @returns {boolean} - True if signature is valid
+ * - Electrum/BIP-137: Use bitcoinjs-message for legacy, bip322-js for segwit
+ * - BIP-322: Use bip322-js for all address types
  */
 function validateSignature(message, signature, address, signatureFormat) {
-  switch (signatureFormat) {
-    case SIGNATURE_FORMATS.bip137:
-      // BIP-137 with strict header verification
-      return Verifier.verifySignature(address, message, signature, true);
+  const detectedType = detectAddressType(address);
 
-    case SIGNATURE_FORMATS.bip322:
-    case SIGNATURE_FORMATS.electrum:
-    default:
-      // BIP-322 and Electrum/Standard use loose verification
-      // which ignores header byte and works with various wallet implementations
-      return Verifier.verifySignature(address, message, signature);
+  // BIP-322 format - use bip322-js for all address types
+  if (signatureFormat === SIGNATURE_FORMATS.bip322) {
+    return Verifier.verifySignature(address, message, signature);
   }
+
+  // For legacy addresses, use bitcoinjs-message
+  if (detectedType === ADDRESS_TYPES.legacy) {
+    try {
+      return bitcoinMessage.verify(message, address, signature);
+    } catch (error) {
+      throw new Error(`Legacy verification failed: ${error.message}`);
+    }
+  }
+
+  // For SegWit and wrapped SegWit, use bip322-js
+  // BIP-137 uses strict mode, Electrum uses loose mode
+  const strictMode = signatureFormat === SIGNATURE_FORMATS.bip137;
+  return Verifier.verifySignature(address, message, signature, strictMode);
 }
 
 /**
  * Returns information about signature format compatibility with address types.
  */
 function getFormatCompatibility(signatureFormat, addressType) {
+  // BIP-322 works with everything
   if (signatureFormat === SIGNATURE_FORMATS.bip322) {
     return { compatible: true, note: null };
   }
 
+  // Electrum and BIP-137 don't work with Taproot (requires Schnorr)
   if (addressType === ADDRESS_TYPES.taproot) {
     return {
       compatible: false,
@@ -152,9 +155,9 @@ function getFormatCompatibility(signatureFormat, addressType) {
 module.exports = {
   deriveAddress,
   deriveFromPath,
-  base64UrlDecode,
   validateSignature,
   getFormatCompatibility,
+  detectAddressType,
   ADDRESS_TYPES,
   SIGNATURE_FORMATS,
   toXOnly,
