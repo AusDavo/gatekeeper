@@ -1,5 +1,5 @@
 // bitcoin-utils.js
-const ecc = require("tiny-secp256k1");
+const ecc = require("@bitcoinerlab/secp256k1");
 const { BIP32Factory } = require("bip32");
 const bitcoin = require("bitcoinjs-lib");
 const bitcoinMessage = require("bitcoinjs-message");
