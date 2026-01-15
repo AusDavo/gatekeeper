@@ -1,5 +1,7 @@
 const clearValidationStatement = () => {
-  document.getElementById("validationResult").textContent = "";
+  const resultElement = document.getElementById("validationResult");
+  resultElement.textContent = "";
+  resultElement.classList.remove("success");
 };
 
 function handleInput(event) {

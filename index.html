@@ -3,7 +3,9 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Bitcoin Signature Validation</title>
+    <meta name="description" content="Verify Bitcoin multisig wallet collaborators by validating cryptographic signatures" />
+    <meta name="theme-color" content="#0d1117" />
+    <title>Gatekeeper - Bitcoin Signature Validation</title>
     <link rel="stylesheet" href="style.css" />
     <script
       src="https://kit.fontawesome.com/2d818d2cc6.js"
@@ -12,90 +14,89 @@
   </head>
 
   <body>
-    <section id="heading">
-      <h1 id="pageTitle">Gatekeeper Beauty</h1>
+    <header id="heading">
+      <h1 id="pageTitle">Gatekeeper</h1>
       <p id="pageSubtitle">Challenge your keymasters</p>
-    </section>
+    </header>
 
-    <section id="multisigSection">
-      <div id="uploadContainer">
-        <label for="fileInput" id="uploadButton"
-          >Load a multisig wallet descriptor</label
-        >
-        <input type="file" id="fileInput" accept=".txt, .bsms" />
-      </div>
-      <textarea
-        id="multisigConfigInput"
-        rows="5"
-        placeholder="Or paste one here."
-      ></textarea>
-      <button id="extractXpubsButton">Extract xpubs</button>
-    </section>
+    <main>
+      <section id="multisigSection">
+        <div id="uploadContainer">
+          <label for="fileInput" id="uploadButton">
+            <i class="fa-solid fa-file-import"></i>
+            Load a multisig wallet descriptor
+          </label>
+          <input type="file" id="fileInput" accept=".txt, .bsms" />
+        </div>
+        <textarea
+          id="multisigConfigInput"
+          rows="5"
+          placeholder="Or paste your wallet descriptor here..."
+        ></textarea>
+        <button id="extractXpubsButton">
+          <i class="fa-solid fa-key"></i>
+          Extract xpubs
+        </button>
+      </section>
 
-    <section id="xpubRadioContainer"></section>
+      <section id="xpubRadioContainer"></section>
 
-    <section id="elementsBelowXpub">
-      <section>
+      <section id="elementsBelowXpub">
         <div id="derivationPathResult"></div>
-      </section>
 
-      <section id="messageInputContainer">
-        <label for="messageInput">Enter Message:</label>
+        <div id="messageInputContainer">
+          <label for="messageInput">Challenge Message</label>
+          <div id="buttonHolder">
+            <input type="text" id="messageInput" placeholder="Enter a message to sign" />
+            <button id="copyButton" title="Copy message and derivation path">
+              <i class="fa-regular fa-copy"></i>
+            </button>
+            <span id="copyNotification">Copied!</span>
+            <button id="exportButton" title="Export as .txt file">
+              <i class="fa-solid fa-file-export"></i>
+            </button>
+          </div>
+        </div>
 
-        <section id="buttonHolder">
-          <input type="text" id="messageInput" />
-          <button id="copyButton" title="Copy Message and Derivation Path">
-            <i class="fa-regular fa-copy"></i>
+        <div id="signatureInputContainer">
+          <label for="signatureInput">Signature</label>
+          <div id="buttonHolder">
+            <input type="text" id="signatureInput" placeholder="Paste the signature here" />
+          </div>
+          <button id="evaluateSignatureButton">
+            <i class="fa-solid fa-check-double"></i>
+            Verify Signature
           </button>
+        </div>
 
-          <span id="copyNotification">Copied!</span>
-
-          <button
-            id="exportButton"
-            title="Export Message and Derivation Path as a .txt file"
-          >
-            <i class="fa-solid fa-file-export"></i>
-          </button>
-        </section>
-      </section>
-
-      <section id="signatureInputContainer">
-        <label for="signatureInput">Enter Signature:</label>
-        <section id="buttonHolder">
-          <input type="text" id="signatureInput" />
-        </section>
-        <button id="evaluateSignatureButton">Evaluate signature</button>
-      </section>
-
-      <section>
         <div id="validationResult"></div>
       </section>
-    </section>
 
-    <section id="importDescriptorContainer">
-      <button id="importDescriptorButton">Import a new descriptor</button>
-    </section>
-    <script defer src="bundled.js"></script>
+      <section id="importDescriptorContainer">
+        <button id="importDescriptorButton">
+          <i class="fa-solid fa-rotate"></i>
+          Import a new descriptor
+        </button>
+      </section>
+    </main>
 
     <footer>
       <p>
-        View the project, submit an issue or contribute:
-        <a href="https://github.com/AusDavo/gatekeeper" target="_blank"
-          >Gatekeeper</a
-        >
+        <a href="https://github.com/AusDavo/gatekeeper" target="_blank" rel="noopener noreferrer">
+          <i class="fa-brands fa-github"></i>
+          View on GitHub
+        </a>
       </p>
       <p>
-        This project uses the
-        <a href="https://pypi.org/project/bitcoin-utils/" target="_blank"
-          >bitcoin-utils.js</a
-        >
-        library.
+        Built with
+        <a href="https://github.com/bitcoinjs/bitcoinjs-lib" target="_blank" rel="noopener noreferrer">bitcoinjs-lib</a>
       </p>
       <p>
         Support development:
-        <a href="lightning:suds4sats@zeuspay.com" id="donationLink"
-          >suds4sats@zeuspay.com</a
-        >
+        <a href="lightning:suds4sats@zeuspay.com" id="donationLink">
+          <i class="fa-solid fa-bolt"></i>
+          suds4sats@zeuspay.com
+        </a>
         <img
           src="./img/suds4satszeusqr.jpeg"
           alt="Lightning Address QR Code"
@@ -103,5 +104,7 @@
         />
       </p>
     </footer>
+
+    <script defer src="bundled.js"></script>
   </body>
 </html>

@@ -90,9 +90,6 @@ const handleXpubRadioChange = (event) => {
 `;
 
     showElements(elementsBelowXpub);
-    // showElements(messageInput);
-    // showElements(signatureInput);
-    // showElements(evaluateSignatureButton);
     showElements(copyButton, "flex");
 
     copyButton.addEventListener("click", async function () {
@@ -179,8 +176,10 @@ const logSignatureValidationResult = (isValid, errorMessage) => {
 
   if (isValid) {
     resultElement.textContent = "Signature is valid!";
+    resultElement.classList.add("success");
   } else {
     resultElement.textContent = errorMessage || "Signature is NOT valid!";
+    resultElement.classList.remove("success");
   }
 };
 
