@@ -2,7 +2,7 @@
 const ecc = require("@bitcoinerlab/secp256k1");
 const { BIP32Factory } = require("bip32");
 const bitcoin = require("bitcoinjs-lib");
-const { Verifier, BIP137 } = require("bip322-js");
+const { Verifier } = require("bip322-js");
 
 // Initialize BIP32 with the secp256k1 library
 const bip32 = BIP32Factory(ecc);
@@ -118,19 +118,16 @@ function base64UrlDecode(base64Url) {
  */
 function validateSignature(message, signature, address, signatureFormat) {
   switch (signatureFormat) {
-    case SIGNATURE_FORMATS.bip322:
-      // BIP-322 works with all address types including Taproot
-      return Verifier.verifySignature(address, message, signature);
-
     case SIGNATURE_FORMATS.bip137:
       // BIP-137 with strict header verification
-      return BIP137.verify(signature, address, message, false);
+      return Verifier.verifySignature(address, message, signature, true);
 
+    case SIGNATURE_FORMATS.bip322:
     case SIGNATURE_FORMATS.electrum:
     default:
-      // Electrum/Standard format - use loose BIP-137 verification
+      // BIP-322 and Electrum/Standard use loose verification
       // which ignores header byte and works with various wallet implementations
-      return BIP137.verify(signature, address, message, true);
+      return Verifier.verifySignature(address, message, signature);
   }
 }
 
