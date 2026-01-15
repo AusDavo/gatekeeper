@@ -10,6 +10,7 @@ const bip32 = BIP32Factory(ecc);
 
 const ADDRESS_TYPES = {
   legacy: "legacy", // P2PKH - starts with 1
+  segwitWrapped: "segwit-wrapped", // P2SH-P2WPKH - starts with 3
   segwit: "segwit", // P2WPKH - starts with bc1q
   taproot: "taproot", // P2TR - starts with bc1p
 };
@@ -90,6 +91,12 @@ function deriveAddress(xpub, relativePath, addressType = ADDRESS_TYPES.legacy) {
       break;
     case ADDRESS_TYPES.segwit:
       payment = bitcoin.payments.p2wpkh({ pubkey: publicKey });
+      break;
+    case ADDRESS_TYPES.segwitWrapped:
+      // P2SH-P2WPKH: wrap P2WPKH in P2SH
+      payment = bitcoin.payments.p2sh({
+        redeem: bitcoin.payments.p2wpkh({ pubkey: publicKey }),
+      });
       break;
     case ADDRESS_TYPES.legacy:
     default:

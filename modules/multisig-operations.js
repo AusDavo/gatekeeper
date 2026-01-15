@@ -122,6 +122,7 @@ function updateDerivationDisplay() {
 
     const addressTypeLabels = {
       legacy: "Legacy (P2PKH)",
+      "segwit-wrapped": "Wrapped SegWit (P2SH-P2WPKH)",
       segwit: "Native SegWit (P2WPKH)",
       taproot: "Taproot (P2TR)",
     };
