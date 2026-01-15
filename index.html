@@ -79,6 +79,14 @@
         </div>
 
         <div id="signatureInputContainer">
+          <div id="signatureFormatContainer">
+            <label for="signatureFormatSelect">Signature Format</label>
+            <select id="signatureFormatSelect">
+              <option value="electrum">Standard (Electrum)</option>
+              <option value="bip137">BIP-137 (Trezor)</option>
+              <option value="bip322">BIP-322 (Simple)</option>
+            </select>
+          </div>
           <label for="signatureInput">Signature</label>
           <div id="buttonHolder">
             <input type="text" id="signatureInput" placeholder="Paste the signature here" />

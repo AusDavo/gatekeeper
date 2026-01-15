@@ -3,6 +3,7 @@ const ecc = require("@bitcoinerlab/secp256k1");
 const { BIP32Factory } = require("bip32");
 const bitcoin = require("bitcoinjs-lib");
 const bitcoinMessage = require("bitcoinjs-message");
+const { Verifier, BIP137 } = require("bip322-js");
 
 // Initialize BIP32 with the secp256k1 library
 const bip32 = BIP32Factory(ecc);
@@ -11,6 +12,12 @@ const ADDRESS_TYPES = {
   legacy: "legacy", // P2PKH - starts with 1
   segwit: "segwit", // P2WPKH - starts with bc1q
   taproot: "taproot", // P2TR - starts with bc1p
+};
+
+const SIGNATURE_FORMATS = {
+  electrum: "electrum", // Standard/Electrum format
+  bip137: "bip137", // BIP-137 (Trezor) format
+  bip322: "bip322", // BIP-322 (Simple) format
 };
 
 /**
@@ -102,27 +109,48 @@ function base64UrlDecode(base64Url) {
 }
 
 /**
- * Validates a Bitcoin signed message.
- * Note: Standard message signing works with Legacy and SegWit addresses.
- * Taproot uses Schnorr signatures which require different verification (BIP-322).
+ * Validates a Bitcoin signed message using the specified format.
  *
  * @param {string} message - The original message
  * @param {string} signature - Base64-encoded signature
  * @param {string} address - The Bitcoin address
- * @param {string} addressType - The address type for context
+ * @param {string} signatureFormat - One of: electrum, bip137, bip322
  * @returns {boolean} - True if signature is valid
  */
-function validateSignature(message, signature, address, addressType) {
-  // Taproot addresses use Schnorr signatures (BIP-340) and BIP-322 message format
-  // Standard bitcoinjs-message doesn't support this natively
-  if (addressType === ADDRESS_TYPES.taproot) {
-    throw new Error(
-      "Taproot signature verification requires BIP-322. Use Legacy or SegWit for message signing."
-    );
+function validateSignature(message, signature, address, signatureFormat) {
+  switch (signatureFormat) {
+    case SIGNATURE_FORMATS.bip322:
+      // BIP-322 works with all address types including Taproot
+      return Verifier.verifySignature(address, message, signature);
+
+    case SIGNATURE_FORMATS.bip137:
+      // BIP-137 with loose verification (handles wallets that don't follow spec strictly)
+      return BIP137.verify(signature, address, message, true);
+
+    case SIGNATURE_FORMATS.electrum:
+    default:
+      // Standard Electrum format using bitcoinjs-message
+      const decodedSignature = base64UrlDecode(signature);
+      return bitcoinMessage.verify(message, address, decodedSignature);
+  }
+}
+
+/**
+ * Returns information about signature format compatibility with address types.
+ */
+function getFormatCompatibility(signatureFormat, addressType) {
+  if (signatureFormat === SIGNATURE_FORMATS.bip322) {
+    return { compatible: true, note: null };
   }
 
-  const decodedSignature = base64UrlDecode(signature);
-  return bitcoinMessage.verify(message, address, decodedSignature);
+  if (addressType === ADDRESS_TYPES.taproot) {
+    return {
+      compatible: false,
+      note: "Taproot addresses require BIP-322 format for signature verification.",
+    };
+  }
+
+  return { compatible: true, note: null };
 }
 
 module.exports = {
@@ -130,6 +158,8 @@ module.exports = {
   deriveFromPath,
   base64UrlDecode,
   validateSignature,
+  getFormatCompatibility,
   ADDRESS_TYPES,
+  SIGNATURE_FORMATS,
   toXOnly,
 };

@@ -75,23 +75,27 @@ const populateXpubRadioLabels = (xpubsAndFingerprints, container) => {
 function getDerivationSettings() {
   const addressType = getElement("addressTypeSelect").value;
   const relativePath = getElement("relativePathInput").value.trim();
-  return { addressType, relativePath };
+  const signatureFormat = getElement("signatureFormatSelect").value;
+  return { addressType, relativePath, signatureFormat };
 }
 
-function updateTaprootWarning(addressType) {
+function updateCompatibilityWarning() {
+  const { addressType, signatureFormat } = getDerivationSettings();
   const warning = getElement("taprootWarning");
-  const signatureSection = getElement("signatureInputContainer");
   const evaluateButton = getElement("evaluateSignatureButton");
 
-  if (addressType === "taproot") {
+  const compatibility = bitcoinUtils.getFormatCompatibility(
+    signatureFormat,
+    addressType
+  );
+
+  if (!compatibility.compatible) {
+    warning.textContent = compatibility.note;
     warning.classList.add("visible");
-    // Disable signature verification for taproot
-    signatureSection.style.opacity = "0.5";
     evaluateButton.disabled = true;
-    evaluateButton.title = "Taproot signature verification not supported";
+    evaluateButton.title = compatibility.note;
   } else {
     warning.classList.remove("visible");
-    signatureSection.style.opacity = "1";
     evaluateButton.disabled = false;
     evaluateButton.title = "";
   }
@@ -106,8 +110,8 @@ function updateDerivationDisplay() {
   const basePath = selectedEntry ? selectedEntry.path : "unknown";
   const { addressType, relativePath } = getDerivationSettings();
 
-  // Update taproot warning visibility
-  updateTaprootWarning(addressType);
+  // Update compatibility warning
+  updateCompatibilityWarning();
 
   try {
     const result = bitcoinUtils.deriveAddress(
@@ -164,16 +168,20 @@ function updateDerivationDisplay() {
 function setupDerivationControlListeners() {
   const addressTypeSelect = getElement("addressTypeSelect");
   const relativePathInput = getElement("relativePathInput");
+  const signatureFormatSelect = getElement("signatureFormatSelect");
 
   // Remove old listeners by cloning
   const newAddressSelect = addressTypeSelect.cloneNode(true);
   const newPathInput = relativePathInput.cloneNode(true);
+  const newFormatSelect = signatureFormatSelect.cloneNode(true);
 
   addressTypeSelect.parentNode.replaceChild(newAddressSelect, addressTypeSelect);
   relativePathInput.parentNode.replaceChild(newPathInput, relativePathInput);
+  signatureFormatSelect.parentNode.replaceChild(newFormatSelect, signatureFormatSelect);
 
   newAddressSelect.addEventListener("change", updateDerivationDisplay);
   newPathInput.addEventListener("input", updateDerivationDisplay);
+  newFormatSelect.addEventListener("change", updateCompatibilityWarning);
 }
 
 const handleXpubRadioChange = (event) => {
@@ -250,6 +258,7 @@ function importMultisigDescriptor() {
   multisigConfigInput.value = "";
   getElement("addressTypeSelect").value = "legacy";
   getElement("relativePathInput").value = "0/0";
+  getElement("signatureFormatSelect").value = "electrum";
   getElement("taprootWarning").classList.remove("visible");
 }
 
@@ -266,9 +275,9 @@ const logSignatureValidationResult = (isValid, errorMessage) => {
 };
 
 function evaluateSignature() {
-  const { addressType, relativePath } = getDerivationSettings();
+  const { addressType, relativePath, signatureFormat } = getDerivationSettings();
 
-  const signatureInputValue = getElement("signatureInput").value;
+  const signatureInputValue = getElement("signatureInput").value.trim();
   const messageInputValue = getElement("messageInput").value || "default";
 
   const selectedRadio = document.querySelector(
@@ -298,7 +307,7 @@ function evaluateSignature() {
       messageInputValue,
       signatureInputValue,
       result.address,
-      addressType
+      signatureFormat
     );
 
     logSignatureValidationResult(isValid);

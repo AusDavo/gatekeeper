@@ -1,6 +1,6 @@
 {
   "name": "gatekeeper",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "description": "Bitcoin multisig wallet signature verification tool",
   "scripts": {
     "build": "browserify main.js -o bundled.js",
@@ -9,6 +9,7 @@
   "dependencies": {
     "@bitcoinerlab/secp256k1": "^1.1.1",
     "bip32": "^4.0.0",
+    "bip322-js": "^3.0.0",
     "bitcoinjs-lib": "^6.1.6",
     "bitcoinjs-message": "^2.2.0"
   },
