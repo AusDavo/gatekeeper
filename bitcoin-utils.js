@@ -2,7 +2,6 @@
 const ecc = require("@bitcoinerlab/secp256k1");
 const { BIP32Factory } = require("bip32");
 const bitcoin = require("bitcoinjs-lib");
-const bitcoinMessage = require("bitcoinjs-message");
 const { Verifier, BIP137 } = require("bip322-js");
 
 // Initialize BIP32 with the secp256k1 library
@@ -124,14 +123,14 @@ function validateSignature(message, signature, address, signatureFormat) {
       return Verifier.verifySignature(address, message, signature);
 
     case SIGNATURE_FORMATS.bip137:
-      // BIP-137 with loose verification (handles wallets that don't follow spec strictly)
-      return BIP137.verify(signature, address, message, true);
+      // BIP-137 with strict header verification
+      return BIP137.verify(signature, address, message, false);
 
     case SIGNATURE_FORMATS.electrum:
     default:
-      // Standard Electrum format using bitcoinjs-message
-      // Pass signature string directly - library handles base64 decoding
-      return bitcoinMessage.verify(message, address, signature);
+      // Electrum/Standard format - use loose BIP-137 verification
+      // which ignores header byte and works with various wallet implementations
+      return BIP137.verify(signature, address, message, true);
   }
 }
 
