@@ -42,6 +42,20 @@
       <section id="xpubRadioContainer"></section>
 
       <section id="elementsBelowXpub">
+        <div id="derivationControls">
+          <div id="addressTypeContainer">
+            <label for="addressTypeSelect">Address Type</label>
+            <select id="addressTypeSelect">
+              <option value="legacy">Legacy (P2PKH) - 1...</option>
+              <option value="segwit">Native SegWit (P2WPKH) - bc1q...</option>
+            </select>
+          </div>
+          <div id="childIndexContainer">
+            <label for="childIndexInput">Child Index</label>
+            <input type="number" id="childIndexInput" value="0" min="0" max="2147483647" />
+          </div>
+        </div>
+
         <div id="derivationPathResult"></div>
 
         <div id="messageInputContainer">

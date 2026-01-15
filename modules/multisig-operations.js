@@ -72,39 +72,68 @@ const populateXpubRadioLabels = (xpubsAndFingerprints, container) => {
   });
 };
 
+function getDerivationSettings() {
+  const addressType = getElement("addressTypeSelect").value;
+  const childIndex = parseInt(getElement("childIndexInput").value, 10) || 0;
+  return { addressType, childIndex };
+}
+
+function updateDerivationDisplay() {
+  if (!selectedXpub) return;
+
+  const selectedEntry = associatedPathsAndXpubs.find(
+    (entry) => entry.xpub === selectedXpub
+  );
+  const formattedPath = selectedEntry ? selectedEntry.path : "unknown";
+  const { addressType, childIndex } = getDerivationSettings();
+
+  const selectedAddress = bitcoinUtils.deriveAddress(
+    selectedXpub,
+    childIndex,
+    addressType
+  ).address;
+
+  const addressTypeLabel =
+    addressType === "segwit" ? "Native SegWit (P2WPKH)" : "Legacy (P2PKH)";
+
+  const derivationPathResult = getElement("derivationPathResult");
+  derivationPathResult.innerHTML = `
+    <strong>${addressTypeLabel}</strong> address at child index <strong>${childIndex}</strong>:<br>
+    <strong>${selectedAddress}</strong><br>
+    Your collaborator can derive its corresponding private key from the BIP32 root key using this path:<br>
+    <strong>m${formattedPath}/${childIndex}</strong><br>
+    Ask your collaborator to sign a message using this key. Paste the returned signature below to verify.
+  `;
+
+  uiInteraction.clearValidationStatement();
+}
+
+function setupDerivationControlListeners() {
+  const addressTypeSelect = getElement("addressTypeSelect");
+  const childIndexInput = getElement("childIndexInput");
+
+  addressTypeSelect.addEventListener("change", updateDerivationDisplay);
+  childIndexInput.addEventListener("input", updateDerivationDisplay);
+}
+
 const handleXpubRadioChange = (event) => {
   selectedXpub = event.target.value;
   if (selectedXpub) {
-    const selectedEntry = associatedPathsAndXpubs.find(
-      (entry) => entry.xpub === selectedXpub
-    );
-    const formattedPath = selectedEntry ? selectedEntry.path : "unknown";
+    showElements(getElement("elementsBelowXpub"));
+    showElements(getElement("copyButton"), "flex");
+    updateDerivationDisplay();
+    setupDerivationControlListeners();
 
-    const selectedAddress = bitcoinUtils.deriveAddress(selectedXpub, 0).address;
-    derivationPathResult.innerHTML = `
-  The first child key of the selected xpub affords the following address:<br>
-  <strong>${selectedAddress}</strong><br>
-  Your collaborator can derive its corresponding private key from the BIP32 root key using this path:<br>
-  <strong>m${formattedPath}/0</strong><br>
-  Ask your collaborator to sign a new message using this key. Paste the returned signature below and click the button to evaluate it. A successful outcome indicates that your collaborator maintains control over their key.
-`;
-
-    showElements(elementsBelowXpub);
-    showElements(copyButton, "flex");
-
-    copyButton.addEventListener("click", async function () {
+    const copyButton = getElement("copyButton");
+    copyButton.onclick = async function () {
       const textToCopy = generateExportText(selectedXpub);
-
       try {
         await navigator.clipboard.writeText(textToCopy);
-        console.log("Text successfully copied to clipboard");
         uiInteraction.showCopySuccessNotification();
       } catch (err) {
         console.error("Unable to copy to clipboard", err);
       }
-    });
-
-    uiInteraction.clearValidationStatement();
+    };
   }
 };
 
@@ -122,27 +151,15 @@ function extractXpubsAndPopulateRadioButtons() {
       ...extractPathsAndXpubsFromMultisigConfig(multisigConfigInput.value)
     );
 
+    if (associatedPathsAndXpubs.length === 0) {
+      console.error("No xpubs found in descriptor");
+      return;
+    }
+
     showElements(importDescriptorButton);
-
-    associatedPathsAndXpubs.forEach((entry, index) => {
-      const radioBtn = document.createElement("input");
-      radioBtn.type = "radio";
-      radioBtn.name = "xpubRadio";
-      radioBtn.value = entry.xpub;
-      radioBtn.id = `xpubRadio${index + 1}`;
-      const label = document.createElement("label");
-      label.htmlFor = `xpubRadio${index + 1}`;
-      label.innerText = `XPub ${index + 1}`;
-
-      xpubRadioContainer.appendChild(radioBtn);
-      xpubRadioContainer.appendChild(label);
-      xpubRadioContainer.appendChild(document.createElement("br"));
-
-      showElements(xpubRadioContainer);
-
-      xpubRadioContainer.addEventListener("change", handleXpubRadioChange);
-      populateXpubRadioLabels(associatedPathsAndXpubs, xpubRadioContainer);
-    });
+    showElements(xpubRadioContainer);
+    populateXpubRadioLabels(associatedPathsAndXpubs, xpubRadioContainer);
+    xpubRadioContainer.addEventListener("change", handleXpubRadioChange);
   } catch (error) {
     console.error("Error during xpub extraction:", error.message);
   }
@@ -168,7 +185,11 @@ function importMultisigDescriptor() {
   showElements([multisigSection, extractXpubsButton]);
   hideElements([elementsBelowXpub, xpubRadioContainer, importDescriptorButton]);
 
+  // Reset state
+  selectedXpub = null;
   multisigConfigInput.value = "";
+  getElement("addressTypeSelect").value = "legacy";
+  getElement("childIndexInput").value = "0";
 }
 
 const logSignatureValidationResult = (isValid, errorMessage) => {
@@ -184,10 +205,10 @@ const logSignatureValidationResult = (isValid, errorMessage) => {
 };
 
 function evaluateSignature() {
-  let selectedXpub = null;
+  const { addressType, childIndex } = getDerivationSettings();
 
   const getAddressFromXpub = (xpub) =>
-    bitcoinUtils.deriveAddress(xpub, 0).address;
+    bitcoinUtils.deriveAddress(xpub, childIndex, addressType).address;
 
   const signatureInputValue = getElement("signatureInput").value;
   const messageInputValue = getElement("messageInput").value || "default";
@@ -197,14 +218,15 @@ function evaluateSignature() {
   );
 
   try {
+    let currentXpub;
     if (selectedRadio) {
       const index = parseInt(selectedRadio.id.replace("xpubRadio", "")) - 1;
-      selectedXpub = associatedPathsAndXpubs[index].xpub;
+      currentXpub = associatedPathsAndXpubs[index].xpub;
     } else {
       throw new Error("No xpub selected");
     }
 
-    const address = getAddressFromXpub(selectedXpub);
+    const address = getAddressFromXpub(currentXpub);
 
     if (signatureInputValue.length === 0) {
       throw new Error("Signature is absent");
@@ -231,14 +253,15 @@ function evaluateSignature() {
   }
 }
 
-function generateExportText(selectedXpub) {
+function generateExportText(xpub) {
   const messageInputValue = getElement("messageInput").value || "";
   const selectedEntry = associatedPathsAndXpubs.find(
-    (entry) => entry.xpub === selectedXpub
+    (entry) => entry.xpub === xpub
   );
   const formattedPath = selectedEntry ? selectedEntry.path : "unknown";
+  const { childIndex } = getDerivationSettings();
 
-  return `${messageInputValue}\nm${formattedPath}/0`;
+  return `${messageInputValue}\nm${formattedPath}/${childIndex}`;
 }
 
 function exportToFile() {

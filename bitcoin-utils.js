@@ -2,12 +2,27 @@
 const bitcoin = require('bitcoinjs-lib');
 const bitcoinMessage = require('bitcoinjs-message');
 
-function deriveAddress(xpub, index) {
+const ADDRESS_TYPES = {
+  legacy: 'legacy',      // P2PKH - starts with 1
+  segwit: 'segwit',      // P2WPKH - starts with bc1q
+};
+
+function deriveAddress(xpub, index, addressType = ADDRESS_TYPES.legacy) {
   const node = bitcoin.bip32.fromBase58(xpub);
   const publicKeyBuffer = node.derive(index).publicKey;
-  const address = bitcoin.payments.p2pkh({ pubkey: publicKeyBuffer }).address;
 
-  return { address };
+  let payment;
+  switch (addressType) {
+    case ADDRESS_TYPES.segwit:
+      payment = bitcoin.payments.p2wpkh({ pubkey: publicKeyBuffer });
+      break;
+    case ADDRESS_TYPES.legacy:
+    default:
+      payment = bitcoin.payments.p2pkh({ pubkey: publicKeyBuffer });
+      break;
+  }
+
+  return { address: payment.address };
 }
 
 function base64UrlDecode(base64Url) {
@@ -25,4 +40,5 @@ module.exports = {
   deriveAddress,
   base64UrlDecode,
   validateSignature,
+  ADDRESS_TYPES,
 };

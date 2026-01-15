@@ -273,6 +273,68 @@ input[type="radio"] {
   display: none;
 }
 
+/* Derivation Controls */
+#derivationControls {
+  display: flex;
+  gap: 16px;
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+#addressTypeContainer,
+#childIndexContainer {
+  flex: 1;
+}
+
+#addressTypeContainer label,
+#childIndexContainer label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+select,
+input[type="number"] {
+  width: 100%;
+  padding: 10px 12px;
+  font-family: var(--font-family);
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  background: var(--bg-input);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  cursor: pointer;
+}
+
+select:hover,
+input[type="number"]:hover {
+  border-color: var(--text-muted);
+}
+
+select:focus,
+input[type="number"]:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.15);
+}
+
+select option {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
 /* Derivation Path Result */
 #derivationPathResult {
   width: 100%;
@@ -468,6 +530,11 @@ footer a:hover {
   #xpubRadioContainer,
   #elementsBelowXpub {
     padding: 16px;
+  }
+
+  #derivationControls {
+    flex-direction: column;
+    gap: 12px;
   }
 
   #buttonHolder {
