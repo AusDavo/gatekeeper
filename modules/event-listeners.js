@@ -16,7 +16,9 @@ const handleButtonClick = (buttonId) => {
     case "exportButton":
       multisigOperations.exportToFile();
       break;
-    // Add more cases as needed
+    case "seedsignerQrButton":
+      multisigOperations.generateSeedsignerQr();
+      break;
   }
 };
 
@@ -32,12 +34,19 @@ const addEventListeners = () => {
     "importDescriptorButton",
     "evaluateSignatureButton",
     "exportButton",
+    "seedsignerQrButton",
   ];
 
   buttonIds.forEach((buttonId) => {
     document.getElementById(buttonId).addEventListener("click", () => {
       handleButtonClick(buttonId);
     });
+  });
+
+  document.getElementById("qrOverlay").addEventListener("click", (event) => {
+    if (event.target === event.currentTarget) {
+      event.currentTarget.classList.remove("visible");
+    }
   });
 };
 

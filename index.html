@@ -76,7 +76,16 @@
             <button id="exportButton" title="Export as .txt file">
               <i class="fa-solid fa-file-export"></i>
             </button>
+            <button id="seedsignerQrButton" title="Generate SeedSigner signing QR code">
+              <i class="fa-solid fa-qrcode"></i>
+            </button>
           </div>
+          <p id="seedsignerInfo">
+            <i class="fa-solid fa-circle-info"></i>
+            Generate a QR code for <a href="https://seedsigner.com" target="_blank">SeedSigner</a> signing.
+            Multisig paths require <a href="https://github.com/AusDavo/seedsigner/releases/tag/0.8.6-multisig-msg-signing" target="_blank">patched firmware</a>.
+            <a href="https://blog.dpinkerton.com/posts/patching-seedsigner-multisig-message-signing/" target="_blank">Learn more</a>.
+          </p>
         </div>
 
         <div id="signatureInputContainer">
@@ -133,6 +142,13 @@
         />
       </p>
     </footer>
+
+    <div id="qrOverlay">
+      <div id="qrModal">
+        <canvas id="qrCanvas"></canvas>
+        <p id="qrLabel"></p>
+      </div>
+    </div>
 
     <script defer src="bundled.js"></script>
   </body>

@@ -1,5 +1,6 @@
 const bitcoinUtils = require("../bitcoin-utils");
 const uiInteraction = require("./ui-interaction");
+const QRCode = require("qrcode");
 
 const associatedPathsAndXpubs = [];
 let selectedXpub = null;
@@ -348,6 +349,36 @@ function exportToFile() {
   }
 }
 
+function generateSeedsignerQr() {
+  if (!selectedXpub) return;
+
+  const selectedEntry = associatedPathsAndXpubs.find(
+    (entry) => entry.xpub === selectedXpub
+  );
+  const basePath = selectedEntry ? selectedEntry.path : "unknown";
+  const { relativePath } = getDerivationSettings();
+
+  const fullPath = relativePath
+    ? `m${basePath}/${relativePath}`
+    : `m${basePath}`;
+
+  const message = getElement("messageInput").value || "";
+  const command = `signmessage: ${fullPath} ascii:${message}`;
+
+  const canvas = getElement("qrCanvas");
+  const label = getElement("qrLabel");
+  const overlay = getElement("qrOverlay");
+
+  QRCode.toCanvas(canvas, command, { width: 300, margin: 2 }, function (error) {
+    if (error) {
+      console.error("QR code generation failed:", error);
+      return;
+    }
+    label.textContent = command;
+    overlay.classList.add("visible");
+  });
+}
+
 module.exports = {
   extractPathsAndXpubsFromMultisigConfig,
   populateXpubRadioLabels,
@@ -356,4 +387,5 @@ module.exports = {
   evaluateSignature,
   generateExportText,
   exportToFile,
+  generateSeedsignerQr,
 };
