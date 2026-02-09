@@ -1,6 +1,7 @@
 const uiInteraction = require("./ui-interaction");
 const fileHandling = require("./file-handling");
 const multisigOperations = require("./multisig-operations");
+const QRCode = require("qrcode");
 
 const handleButtonClick = (buttonId) => {
   switch (buttonId) {
@@ -52,6 +53,15 @@ const addEventListeners = () => {
   document.getElementById("seedsignerInfoToggle").addEventListener("click", () => {
     document.getElementById("seedsignerInfo").classList.toggle("visible");
   });
+
+  const donationAddress = document.getElementById("donationLink").textContent.trim();
+  QRCode.toString(donationAddress, { type: "svg", margin: 2 })
+    .then(function (svg) {
+      document.getElementById("donationQr").innerHTML = svg;
+    })
+    .catch(function (err) {
+      console.error("Donation QR generation failed:", err);
+    });
 };
 
 module.exports = { addEventListeners };
