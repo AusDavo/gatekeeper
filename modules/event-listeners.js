@@ -48,6 +48,10 @@ const addEventListeners = () => {
       event.currentTarget.classList.remove("visible");
     }
   });
+
+  document.getElementById("seedsignerInfoToggle").addEventListener("click", () => {
+    document.getElementById("seedsignerInfo").classList.toggle("visible");
+  });
 };
 
 module.exports = { addEventListeners };

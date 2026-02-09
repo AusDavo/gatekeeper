@@ -234,6 +234,10 @@ const addEventListeners = () => {
       event.currentTarget.classList.remove("visible");
     }
   });
+
+  document.getElementById("seedsignerInfoToggle").addEventListener("click", () => {
+    document.getElementById("seedsignerInfo").classList.toggle("visible");
+  });
 };
 
 module.exports = { addEventListeners };
@@ -643,19 +647,19 @@ function generateSeedsignerQr() {
   const message = getElement("messageInput").value || "";
   const command = `signmessage: ${fullPath} ascii:${message}`;
 
-  const image = getElement("qrImage");
+  const container = getElement("qrSvgContainer");
   const label = getElement("qrLabel");
   const overlay = getElement("qrOverlay");
 
-  QRCode.toDataURL(command, { width: 300, margin: 2 }, function (error, url) {
-    if (error) {
+  QRCode.toString(command, { type: "svg", width: 300, margin: 2 })
+    .then(function (svgString) {
+      container.innerHTML = svgString;
+      label.textContent = command;
+      overlay.classList.add("visible");
+    })
+    .catch(function (error) {
       console.error("QR code generation failed:", error);
-      return;
-    }
-    image.src = url;
-    label.textContent = command;
-    overlay.classList.add("visible");
-  });
+    });
 }
 
 module.exports = {

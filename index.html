@@ -79,9 +79,11 @@
             <button id="seedsignerQrButton" title="Generate SeedSigner signing QR code">
               <i class="fa-solid fa-qrcode"></i>
             </button>
+            <span id="seedsignerInfoToggle" title="SeedSigner info">
+              <i class="fa-solid fa-circle-info"></i>
+            </span>
           </div>
           <p id="seedsignerInfo">
-            <i class="fa-solid fa-circle-info"></i>
             Generate a QR code for <a href="https://seedsigner.com" target="_blank">SeedSigner</a> signing.
             Multisig paths require <a href="https://github.com/AusDavo/seedsigner/releases/tag/0.8.6-multisig-msg-signing" target="_blank">patched firmware</a>.
             <a href="https://blog.dpinkerton.com/posts/patching-seedsigner-multisig-message-signing/" target="_blank">Learn more</a>.
@@ -145,7 +147,7 @@
 
     <div id="qrOverlay">
       <div id="qrModal">
-        <img id="qrImage" alt="SeedSigner QR Code" />
+        <div id="qrSvgContainer"></div>
         <p id="qrLabel"></p>
       </div>
     </div>

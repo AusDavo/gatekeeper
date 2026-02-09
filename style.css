@@ -573,26 +573,37 @@ footer a:hover {
 }
 
 /* SeedSigner Info */
-#seedsignerInfo {
-  margin: 6px 0 0 0;
-  font-size: 0.6875rem;
+#seedsignerInfoToggle {
+  flex-shrink: 0;
+  padding: 4px;
   color: var(--text-muted);
-  line-height: 1.4;
-  opacity: 0.7;
+  cursor: pointer;
+  font-size: 0.75rem;
+  transition: color var(--transition-fast);
 }
 
-#seedsignerInfo i {
-  margin-right: 3px;
-  font-size: 0.625rem;
+#seedsignerInfoToggle:hover {
+  color: var(--accent-primary);
+}
+
+#seedsignerInfo {
+  display: none;
+  margin: 8px 0 0 0;
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+#seedsignerInfo.visible {
+  display: block;
 }
 
 #seedsignerInfo a {
-  color: var(--text-muted);
+  color: var(--accent-primary);
   text-decoration: none;
 }
 
 #seedsignerInfo a:hover {
-  color: var(--accent-primary);
   text-decoration: underline;
 }
 
@@ -624,7 +635,7 @@ footer a:hover {
   width: 90%;
 }
 
-#qrImage {
+#qrSvgContainer svg {
   width: 100%;
   height: auto;
 }
