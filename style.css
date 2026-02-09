@@ -574,23 +574,25 @@ footer a:hover {
 
 /* SeedSigner Info */
 #seedsignerInfo {
-  margin: 8px 0 0 0;
-  font-size: 0.75rem;
+  margin: 6px 0 0 0;
+  font-size: 0.6875rem;
   color: var(--text-muted);
-  line-height: 1.5;
+  line-height: 1.4;
+  opacity: 0.7;
 }
 
 #seedsignerInfo i {
-  margin-right: 4px;
+  margin-right: 3px;
+  font-size: 0.625rem;
 }
 
 #seedsignerInfo a {
-  color: var(--accent-primary);
+  color: var(--text-muted);
   text-decoration: none;
 }
 
 #seedsignerInfo a:hover {
-  color: var(--accent-primary-hover);
+  color: var(--accent-primary);
   text-decoration: underline;
 }
 
@@ -622,9 +624,9 @@ footer a:hover {
   width: 90%;
 }
 
-#qrCanvas {
-  width: 100% !important;
-  height: auto !important;
+#qrImage {
+  width: 100%;
+  height: auto;
 }
 
 #qrLabel {

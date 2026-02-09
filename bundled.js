@@ -643,15 +643,16 @@ function generateSeedsignerQr() {
   const message = getElement("messageInput").value || "";
   const command = `signmessage: ${fullPath} ascii:${message}`;
 
-  const canvas = getElement("qrCanvas");
+  const image = getElement("qrImage");
   const label = getElement("qrLabel");
   const overlay = getElement("qrOverlay");
 
-  QRCode.toCanvas(canvas, command, { width: 300, margin: 2 }, function (error) {
+  QRCode.toDataURL(command, { width: 300, margin: 2 }, function (error, url) {
     if (error) {
       console.error("QR code generation failed:", error);
       return;
     }
+    image.src = url;
     label.textContent = command;
     overlay.classList.add("visible");
   });
