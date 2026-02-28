@@ -328,6 +328,29 @@ input[type="radio"] {
   display: none;
 }
 
+/* Cosigner verification status */
+#xpubRadioContainer label.cosigner-verified {
+  border-color: var(--success);
+}
+
+.verification-status.verified {
+  color: var(--success);
+  font-weight: 600;
+}
+
+#verificationProgress {
+  width: 100%;
+  text-align: center;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+#verificationProgress.all-verified {
+  color: var(--success);
+  font-weight: 600;
+}
+
 /* Derivation Controls */
 #derivationControls {
   display: flex;
@@ -610,6 +633,21 @@ input[type="number"]::-webkit-inner-spin-button {
   margin-top: 24px;
 }
 
+#downloadReceiptButton {
+  display: none;
+  padding: 10px 20px;
+  background: var(--bg-elevated);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  margin-bottom: 8px;
+}
+
+#downloadReceiptButton:hover {
+  background: var(--bg-input);
+  color: var(--success);
+  border-color: var(--success);
+}
+
 #importDescriptorButton {
   display: none;
   padding: 10px 20px;
@@ -622,6 +660,14 @@ input[type="number"]::-webkit-inner-spin-button {
   background: var(--bg-input);
   color: var(--text);
   border-color: var(--text-dim);
+}
+
+/* Intro Details */
+#introDetails {
+  max-width: 560px;
+  width: 100%;
+  margin-bottom: 24px;
+  background: var(--bg-surface);
 }
 
 /* Help Details */

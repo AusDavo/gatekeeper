@@ -256,6 +256,9 @@ const handleButtonClick = (buttonId) => {
     case "seedsignerQrButton":
       multisigOperations.generateSeedsignerQr();
       break;
+    case "downloadReceiptButton":
+      multisigOperations.generateReceipt();
+      break;
   }
 };
 
@@ -272,6 +275,7 @@ const addEventListeners = () => {
     "evaluateSignatureButton",
     "exportButton",
     "seedsignerQrButton",
+    "downloadReceiptButton",
   ];
 
   buttonIds.forEach((buttonId) => {
@@ -489,6 +493,7 @@ const QRCode = require("qrcode");
 
 const associatedPathsAndXpubs = [];
 let selectedXpub = null;
+const verificationResults = new Map();
 
 const pathsRegex = /\/[\dh'\/]+(?:[h'](?=\d)|[h'])/g;
 const xpubsRegex = /\b\w*xpub\w*\b/g;
@@ -711,9 +716,12 @@ function extractXpubsAndPopulateRadioButtons() {
       return;
     }
 
+    verificationResults.clear();
     showElements(importDescriptorButton);
     showElements(xpubRadioContainer);
     populateXpubRadioLabels(associatedPathsAndXpubs, xpubRadioContainer);
+    updateProgressIndicator();
+    updateReceiptButtonVisibility();
     xpubRadioContainer.addEventListener("change", handleXpubRadioChange);
   } catch (error) {
     console.error("Error during xpub extraction:", error.message);
@@ -741,6 +749,8 @@ function importMultisigDescriptor() {
   hideElements([elementsBelowXpub, xpubRadioContainer, importDescriptorButton]);
 
   // Reset state
+  verificationResults.clear();
+  updateReceiptButtonVisibility();
   selectedXpub = null;
   multisigConfigInput.value = "";
   getElement("addressTypeSelect").value = "legacy";
@@ -749,12 +759,64 @@ function importMultisigDescriptor() {
   getElement("taprootWarning").classList.remove("visible");
 }
 
-const logSignatureValidationResult = (isValid, errorMessage) => {
+function updateRadioLabelStatus(xpub) {
+  const index = associatedPathsAndXpubs.findIndex((e) => e.xpub === xpub);
+  if (index === -1) return;
+  const label = document.querySelector(`label[for="xpubRadio${index + 1}"]`);
+  if (!label) return;
+
+  // Remove existing status span if any
+  const existing = label.querySelector(".verification-status");
+  if (existing) existing.remove();
+
+  if (verificationResults.has(xpub)) {
+    label.classList.add("cosigner-verified");
+    const span = document.createElement("span");
+    span.className = "verification-status verified";
+    span.textContent = " \u2713";
+    label.appendChild(span);
+  }
+}
+
+function updateProgressIndicator() {
+  const container = getElement("xpubRadioContainer");
+  let progress = getElement("verificationProgress");
+  if (!progress) {
+    progress = document.createElement("div");
+    progress.id = "verificationProgress";
+    container.prepend(progress);
+  }
+
+  const total = associatedPathsAndXpubs.length;
+  const verified = verificationResults.size;
+  progress.textContent = `${verified} of ${total} cosigners verified`;
+
+  if (verified > 0 && verified === total) {
+    progress.classList.add("all-verified");
+  } else {
+    progress.classList.remove("all-verified");
+  }
+}
+
+function updateReceiptButtonVisibility() {
+  const btn = getElement("downloadReceiptButton");
+  if (!btn) return;
+  btn.style.display = verificationResults.size > 0 ? "inline-flex" : "none";
+}
+
+const logSignatureValidationResult = (isValid, errorMessage, verificationData) => {
   const resultElement = getElement("validationResult");
 
   if (isValid) {
     resultElement.textContent = "Signature is valid!";
     resultElement.classList.add("success");
+
+    if (verificationData && verificationData.xpub) {
+      verificationResults.set(verificationData.xpub, verificationData);
+      updateRadioLabelStatus(verificationData.xpub);
+      updateProgressIndicator();
+      updateReceiptButtonVisibility();
+    }
   } else {
     resultElement.textContent = errorMessage || "Signature is NOT valid!";
     resultElement.classList.remove("success");
@@ -797,7 +859,26 @@ function evaluateSignature() {
       signatureFormat
     );
 
-    logSignatureValidationResult(isValid);
+    const selectedEntry = associatedPathsAndXpubs.find(
+      (entry) => entry.xpub === currentXpub
+    );
+    const basePath = selectedEntry ? selectedEntry.path : "unknown";
+    const fullPath = relativePath
+      ? `m${basePath}/${relativePath}`
+      : `m${basePath}`;
+
+    logSignatureValidationResult(isValid, null, {
+      xpub: currentXpub,
+      verified: isValid,
+      message: messageInputValue,
+      signature: signatureInputValue,
+      address: result.address,
+      fullPath,
+      addressType,
+      signatureFormat,
+      fingerprint: selectedEntry ? selectedEntry.xpubFingerprint : "unknown",
+      timestamp: new Date().toISOString(),
+    });
   } catch (error) {
     logSignatureValidationResult(false, error.message);
   }
@@ -865,6 +946,56 @@ function generateSeedsignerQr() {
     });
 }
 
+function generateReceipt() {
+  const descriptor = getElement("multisigConfigInput").value;
+  const quorumMatch = descriptor.match(/sortedmulti\((\d+)/);
+  const quorum = quorumMatch ? parseInt(quorumMatch[1]) : "?";
+  const total = associatedPathsAndXpubs.length;
+  const verified = verificationResults.size;
+
+  const now = new Date();
+  const dateStr = now.toISOString().replace("T", " ").replace(/\.\d{3}Z$/, " UTC");
+
+  let md = `# Gatekeeper Verification Receipt\n\n`;
+  md += `**Date:** ${dateStr}\n`;
+  md += `**Wallet:** ${quorum}-of-${total} multisig\n`;
+  md += `**Cosigners verified:** ${verified} of ${total}\n\n`;
+  md += `---\n`;
+
+  associatedPathsAndXpubs.forEach((entry, index) => {
+    const fp = entry.xpubFingerprint !== "unknown" ? entry.xpubFingerprint : "N/A";
+    md += `\n## Cosigner ${index + 1}: ${fp}\n\n`;
+
+    const result = verificationResults.get(entry.xpub);
+    if (result) {
+      const shortXpub = `${entry.xpub.slice(0, 10)}...${entry.xpub.slice(-6)}`;
+      md += `- **Status:** Verified\n`;
+      md += `- **Xpub:** ${shortXpub}\n`;
+      md += `- **Fingerprint:** ${result.fingerprint}\n`;
+      md += `- **Path:** ${result.fullPath}\n`;
+      md += `- **Address:** ${result.address}\n`;
+      md += `- **Address type:** ${result.addressType}\n`;
+      md += `- **Message:** ${result.message}\n`;
+      md += `- **Signature:** ${result.signature}\n`;
+      md += `- **Format:** ${result.signatureFormat}\n`;
+      md += `- **Timestamp:** ${result.timestamp}\n`;
+    } else {
+      md += `- **Status:** Not verified\n`;
+    }
+  });
+
+  md += `\n---\n\n*Verified client-side with [Gatekeeper](https://gatekeeper.dpinkerton.com).*\n`;
+
+  const dateOnly = now.toISOString().slice(0, 10);
+  const blob = new Blob([md], { type: "text/markdown" });
+  const a = document.createElement("a");
+  a.href = window.URL.createObjectURL(blob);
+  a.download = `gatekeeper-receipt-${dateOnly}.md`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
 module.exports = {
   extractPathsAndXpubsFromMultisigConfig,
   populateXpubRadioLabels,
@@ -874,6 +1005,7 @@ module.exports = {
   generateExportText,
   exportToFile,
   generateSeedsignerQr,
+  generateReceipt,
 };
 
 },{"../bitcoin-utils":1,"./ui-interaction":8,"qrcode":252}],7:[function(require,module,exports){

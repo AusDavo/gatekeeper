@@ -24,6 +24,9 @@ const handleButtonClick = (buttonId) => {
     case "seedsignerQrButton":
       multisigOperations.generateSeedsignerQr();
       break;
+    case "downloadReceiptButton":
+      multisigOperations.generateReceipt();
+      break;
   }
 };
 
@@ -40,6 +43,7 @@ const addEventListeners = () => {
     "evaluateSignatureButton",
     "exportButton",
     "seedsignerQrButton",
+    "downloadReceiptButton",
   ];
 
   buttonIds.forEach((buttonId) => {
