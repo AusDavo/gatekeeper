@@ -670,6 +670,14 @@ input[type="number"]::-webkit-inner-spin-button {
   background: var(--bg-surface);
 }
 
+#introDetails summary {
+  color: var(--text-muted);
+}
+
+#introDetails summary:hover {
+  color: var(--accent);
+}
+
 /* Help Details */
 details.help-details {
   width: 100%;
