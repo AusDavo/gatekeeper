@@ -96,6 +96,14 @@ h1 {
   font-size: 1rem;
 }
 
+/* Layout */
+main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
 /* Sections */
 #heading {
   text-align: center;
