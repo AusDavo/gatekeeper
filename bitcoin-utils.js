@@ -140,6 +140,48 @@ function validateSignature(message, signature, address, signatureFormat) {
 }
 
 /**
+ * Detects the signature format from a base64-encoded signature.
+ * BIP-137: 65 bytes with header byte 27-42
+ * Otherwise: assume BIP-322
+ */
+function detectSignatureFormat(signature) {
+  try {
+    const buf = Buffer.from(signature, "base64");
+    if (buf.length === 65) {
+      const header = buf[0];
+      if (header >= 27 && header <= 42) {
+        return { format: "bip137", label: "BIP-137 (ECDSA)" };
+      }
+    }
+  } catch (e) {
+    // Not valid base64
+  }
+  return { format: "bip322", label: "BIP-322" };
+}
+
+/**
+ * Updates the format detection display and optionally sets the format dropdown.
+ */
+function showDetectedFormat(signature) {
+  const display = document.getElementById("signatureFormatDetected");
+  if (!display) return;
+
+  if (!signature || signature.trim().length === 0) {
+    display.textContent = "";
+    return;
+  }
+
+  const detected = detectSignatureFormat(signature);
+  display.textContent = "Detected: " + detected.label;
+
+  // Auto-set the format dropdown
+  const select = document.getElementById("signatureFormatSelect");
+  if (select) {
+    select.value = detected.format;
+  }
+}
+
+/**
  * Returns information about signature format compatibility with address types.
  */
 function getFormatCompatibility(signatureFormat, addressType) {
@@ -165,6 +207,8 @@ module.exports = {
   validateSignature,
   getFormatCompatibility,
   detectAddressType,
+  detectSignatureFormat,
+  showDetectedFormat,
   ADDRESS_TYPES,
   SIGNATURE_FORMATS,
   toXOnly,

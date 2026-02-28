@@ -4,7 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Verify Bitcoin multisig wallet collaborators by validating cryptographic signatures" />
-    <meta name="theme-color" content="#0d1117" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#08080f" />
     <title>Gatekeeper - Bitcoin Signature Validation</title>
     <link rel="stylesheet" href="style.css" />
     <script
@@ -28,11 +29,30 @@
           </label>
           <input type="file" id="fileInput" accept=".txt, .bsms" />
         </div>
+        <div class="descriptor-actions">
+          <button id="scanDescriptorQrButton" type="button">
+            <i class="fa-solid fa-camera"></i>
+            Scan QR
+          </button>
+        </div>
         <textarea
           id="multisigConfigInput"
           rows="5"
-          placeholder="Or paste your wallet descriptor here..."
+          placeholder="wsh(sortedmulti(2,[fingerprint/48h/0h/0h/2h]xpub6...,[fingerprint/48h/0h/0h/2h]xpub6...))"
         ></textarea>
+        <details class="help-details">
+          <summary>How do I export my wallet descriptor?</summary>
+          <div class="help-content">
+            <h4>Sparrow Wallet</h4>
+            <p>Go to <code>Settings</code> tab, then click <code>Export</code> and choose "Wallet Descriptor" or "Output Descriptor".</p>
+            <h4>Coldcard</h4>
+            <p>Insert your microSD, go to <code>Settings &gt; Multisig Wallets</code>, select your wallet, and choose <code>Descriptors</code> &gt; <code>Export</code>.</p>
+            <h4>SeedSigner</h4>
+            <p>Navigate to <code>Tools &gt; Export Xpub</code> and scan the resulting QR code, or export the BSMS file from your coordinator wallet.</p>
+            <h4>Nunchuk</h4>
+            <p>Open your wallet, tap the gear icon, select <code>Wallet Configuration</code>, and export or copy the descriptor.</p>
+          </div>
+        </details>
         <button id="extractXpubsButton">
           <i class="fa-solid fa-key"></i>
           Extract xpubs
@@ -68,7 +88,7 @@
         <div id="messageInputContainer">
           <label for="messageInput">Challenge Message</label>
           <div id="buttonHolder">
-            <input type="text" id="messageInput" placeholder="Enter a message to sign" />
+            <input type="text" id="messageInput" placeholder="Enter a challenge message for your cosigner to sign" />
             <button id="copyButton" title="Copy message and derivation path">
               <i class="fa-regular fa-copy"></i>
             </button>
@@ -101,8 +121,33 @@
           </div>
           <label for="signatureInput">Signature</label>
           <div id="buttonHolder">
-            <input type="text" id="signatureInput" placeholder="Paste the signature here" />
+            <input type="text" id="signatureInput" placeholder="Base64-encoded signature" />
           </div>
+          <div class="signature-actions">
+            <button id="scanSignatureQrButton" type="button">
+              <i class="fa-solid fa-camera"></i>
+              Scan QR
+            </button>
+            <button id="uploadSignatureButton" type="button">
+              <i class="fa-solid fa-file-import"></i>
+              Upload File
+            </button>
+            <input type="file" id="signatureFileInput" accept=".txt, .sig" />
+          </div>
+          <div id="signatureFormatDetected"></div>
+          <details class="help-details">
+            <summary>How do I sign a message?</summary>
+            <div class="help-content">
+              <h4>Sparrow Wallet</h4>
+              <p>Go to <code>Tools &gt; Sign/Verify Message</code>, paste the address and message, then sign with your key.</p>
+              <h4>Coldcard</h4>
+              <p>Go to <code>Advanced/Tools &gt; Sign Message</code>. Load the message from microSD or enter it manually.</p>
+              <h4>SeedSigner</h4>
+              <p>Use the patched firmware to scan the signing QR code generated above, then scan the resulting signature QR.</p>
+              <h4>Trezor</h4>
+              <p>Use Trezor Suite: go to the account, click <code>Sign &amp; Verify</code>, enter the message, and sign. Uses BIP-137 format.</p>
+            </div>
+          </details>
           <button id="evaluateSignatureButton">
             <i class="fa-solid fa-check-double"></i>
             Verify Signature
@@ -119,6 +164,14 @@
         </button>
       </section>
     </main>
+
+    <div id="qrReaderContainer">
+      <div id="qr-reader"></div>
+      <button id="qrScannerClose" type="button">
+        <i class="fa-solid fa-xmark"></i>
+        Close Scanner
+      </button>
+    </div>
 
     <footer>
       <p>

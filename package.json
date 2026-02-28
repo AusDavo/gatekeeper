@@ -12,6 +12,7 @@
     "bip322-js": "^3.0.0",
     "bitcoinjs-lib": "^6.1.6",
     "bitcoinjs-message": "^2.2.0",
+    "html5-qrcode": "^2.3.8",
     "qrcode": "^1.5.4"
   },
   "devDependencies": {
