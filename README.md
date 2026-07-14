@@ -6,6 +6,8 @@
 
 Everything runs client-side. No descriptor, key, message, or signature ever leaves your browser.
 
+![Gatekeeper's quorum ledger showing a 2-of-3 multisig with all three keymasters proven](docs/hero.png)
+
 ---
 
 ## Why
@@ -24,6 +26,10 @@ Useful for onboarding a new multisig, periodic key-liveness checks, inheritance/
 4. **Verify the signature** — paste, scan, or upload their signature; Gatekeeper checks it against the derived address.
 5. **Download a receipt** — a timestamped Markdown record of which keymasters proved control, safe to share.
 
+| Issue a challenge | Verify the signature |
+| --- | --- |
+| ![Deriving the address and writing a challenge message](docs/challenge.png) | ![Verifying a returned signature, showing a proven keymaster](docs/verify.png) |
+
 ## Features
 
 - **Descriptor input** — file (`.txt`/`.bsms`), paste, drag-and-drop, or camera QR scan
@@ -35,6 +41,8 @@ Useful for onboarding a new multisig, periodic key-liveness checks, inheritance/
 - **Mainnet & testnet** — network is detected automatically from the key prefix
 - **Verification receipt** — downloadable Markdown summary
 - **Light/dark themes**
+
+![Gatekeeper in its light theme](docs/theme-light.png)
 
 ### Compatibility notes
 
