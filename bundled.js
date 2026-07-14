@@ -535,8 +535,31 @@ const xpubFingerprintRegex = /\b[A-Fa-f0-9]{8}\b/g;
 const extractMatches = (regex, input) =>
   [...input.matchAll(regex)].map((match) => match[0]);
 
+const UNKNOWN_PATH = "unknown";
+
 const formatPath = (path) =>
-  (path.match(pathsRegex) || ["unknown"])[0].replace(/h/g, "'");
+  (path.match(pathsRegex) || [UNKNOWN_PATH])[0].replace(/h/g, "'");
+
+// A descriptor without a key origin (e.g. no [fingerprint/48h/0h/0h/2h] prefix)
+// yields an unknown base path — we can't form a valid absolute BIP32 path then.
+const isKnownBasePath = (basePath) =>
+  Boolean(basePath) && basePath !== UNKNOWN_PATH;
+
+// Absolute path (m/...) for signing/display, or null when the base is unknown.
+const buildFullPath = (basePath, relativePath) => {
+  if (!isKnownBasePath(basePath)) return null;
+  return relativePath ? `m${basePath}/${relativePath}` : `m${basePath}`;
+};
+
+// Human-readable path for text export / receipts. Falls back to describing the
+// path relative to the xpub rather than emitting a bogus "munknown/0".
+const fullPathForDisplay = (basePath, relativePath) => {
+  const full = buildFullPath(basePath, relativePath);
+  if (full) return full;
+  return relativePath
+    ? `${relativePath} (relative to xpub — descriptor had no key origin)`
+    : UNKNOWN_PATH;
+};
 
 const getElement = (id) => document.getElementById(id);
 
@@ -651,19 +674,14 @@ function updateDerivationDisplay() {
       taproot: "Taproot (P2TR)",
     };
 
-    // Build full path display
-    const fullPath = relativePath
-      ? `m${basePath}/${relativePath}`
-      : `m${basePath}`;
-
     const networkName = bitcoinUtils.getNetworkName(selectedXpub);
+    const knownBase = isKnownBasePath(basePath);
+    const fullPath = buildFullPath(basePath, relativePath);
 
-    const derivationPathResult = getElement("derivationPathResult");
-    derivationPathResult.innerHTML = `
-      <div class="path-info">
-        <span class="path-label">Network:</span>
-        <strong>${networkName}</strong>
-      </div>
+    // With a key origin we show the absolute path; without one we're honest that
+    // only the path relative to the xpub is known (the address is still correct).
+    const pathRows = knownBase
+      ? `
       <div class="path-info">
         <span class="path-label">Base path from descriptor:</span>
         <strong>m${basePath}</strong>
@@ -671,13 +689,34 @@ function updateDerivationDisplay() {
       <div class="path-info">
         <span class="path-label">Full derivation path:</span>
         <strong>${fullPath}</strong>
+      </div>`
+      : `
+      <div class="path-info">
+        <span class="path-label">Base path from descriptor:</span>
+        <strong>Unknown &mdash; no key origin in descriptor</strong>
       </div>
+      <div class="path-info">
+        <span class="path-label">Path relative to this xpub:</span>
+        <strong>${relativePath || "(none)"}</strong>
+      </div>`;
+
+    const instructions = knownBase
+      ? `Ask your collaborator to sign a message using the private key at this path, then paste the signature below to verify.`
+      : `This descriptor didn't include the key's origin (fingerprint + path), so the absolute derivation path can't be shown &mdash; but the address above is derived correctly from the xpub. Ask your collaborator to sign a message using the private key for this address, then paste the signature below to verify.`;
+
+    const derivationPathResult = getElement("derivationPathResult");
+    derivationPathResult.innerHTML = `
+      <div class="path-info">
+        <span class="path-label">Network:</span>
+        <strong>${networkName}</strong>
+      </div>
+      ${pathRows}
       <div class="path-info">
         <span class="path-label">${addressTypeLabels[addressType]} address:</span>
         <strong class="address">${result.address}</strong>
       </div>
       <p class="instructions">
-        Ask your collaborator to sign a message using the private key at this path, then paste the signature below to verify.
+        ${instructions}
       </p>
     `;
 
@@ -901,10 +940,8 @@ function evaluateSignature() {
     const selectedEntry = associatedPathsAndXpubs.find(
       (entry) => entry.xpub === currentXpub
     );
-    const basePath = selectedEntry ? selectedEntry.path : "unknown";
-    const fullPath = relativePath
-      ? `m${basePath}/${relativePath}`
-      : `m${basePath}`;
+    const basePath = selectedEntry ? selectedEntry.path : UNKNOWN_PATH;
+    const fullPath = fullPathForDisplay(basePath, relativePath);
 
     logSignatureValidationResult(isValid, null, {
       xpub: currentXpub,
@@ -928,12 +965,10 @@ function generateExportText(xpub) {
   const selectedEntry = associatedPathsAndXpubs.find(
     (entry) => entry.xpub === xpub
   );
-  const basePath = selectedEntry ? selectedEntry.path : "unknown";
+  const basePath = selectedEntry ? selectedEntry.path : UNKNOWN_PATH;
   const { relativePath } = getDerivationSettings();
 
-  const fullPath = relativePath
-    ? `m${basePath}/${relativePath}`
-    : `m${basePath}`;
+  const fullPath = fullPathForDisplay(basePath, relativePath);
 
   return `${messageInputValue}\n${fullPath}`;
 }
@@ -960,19 +995,27 @@ function generateSeedsignerQr() {
   const selectedEntry = associatedPathsAndXpubs.find(
     (entry) => entry.xpub === selectedXpub
   );
-  const basePath = selectedEntry ? selectedEntry.path : "unknown";
+  const basePath = selectedEntry ? selectedEntry.path : UNKNOWN_PATH;
   const { relativePath } = getDerivationSettings();
 
-  const fullPath = relativePath
-    ? `m${basePath}/${relativePath}`
-    : `m${basePath}`;
-
-  const message = getElement("messageInput").value || "";
-  const command = `signmessage ${fullPath} ascii:${message}`;
+  const fullPath = buildFullPath(basePath, relativePath);
 
   const container = getElement("qrSvgContainer");
   const label = getElement("qrLabel");
   const overlay = getElement("qrOverlay");
+
+  // Without a key origin there's no valid absolute path, so a SeedSigner
+  // signmessage command can't be built. Say so rather than emit "munknown/0".
+  if (!fullPath) {
+    container.innerHTML = "";
+    label.textContent =
+      "This descriptor has no key origin, so a SeedSigner signing path can't be built. Load a descriptor that includes the key origin, e.g. [fingerprint/48h/0h/0h/2h].";
+    overlay.classList.add("visible");
+    return;
+  }
+
+  const message = getElement("messageInput").value || "";
+  const command = `signmessage ${fullPath} ascii:${message}`;
 
   // Standard black-on-white for reliable camera scanning (e.g. SeedSigner).
   // Themed orange-on-dark QR codes scan poorly on device cameras (issue #21).
