@@ -22,6 +22,26 @@ const SIGNATURE_FORMATS = {
 };
 
 /**
+ * Detects the Bitcoin network from an extended public key prefix.
+ * Testnet keys use tpub/upub/vpub (and multisig Upub/Vpub); everything
+ * else is treated as mainnet.
+ */
+function detectNetwork(xpub) {
+  return /^(tpub|upub|vpub|Upub|Vpub)/.test(xpub)
+    ? bitcoin.networks.testnet
+    : bitcoin.networks.bitcoin;
+}
+
+/**
+ * Returns a human-readable network name for an xpub ("Mainnet" / "Testnet").
+ */
+function getNetworkName(xpub) {
+  return detectNetwork(xpub) === bitcoin.networks.testnet
+    ? "Testnet"
+    : "Mainnet";
+}
+
+/**
  * Detects the address type from a Bitcoin address string.
  */
 function detectAddressType(address) {
@@ -41,7 +61,7 @@ function detectAddressType(address) {
  * Only non-hardened derivation is possible from an xpub.
  */
 function deriveFromPath(xpub, relativePath) {
-  const node = bip32.fromBase58(xpub);
+  const node = bip32.fromBase58(xpub, detectNetwork(xpub));
 
   if (!relativePath || relativePath === "") {
     return node;
@@ -81,26 +101,29 @@ function toXOnly(pubkey) {
 function deriveAddress(xpub, relativePath, addressType = ADDRESS_TYPES.legacy) {
   const derived = deriveFromPath(xpub, relativePath);
   const publicKey = derived.publicKey;
+  const network = detectNetwork(xpub);
 
   let payment;
   switch (addressType) {
     case ADDRESS_TYPES.taproot:
       payment = bitcoin.payments.p2tr({
         internalPubkey: toXOnly(publicKey),
+        network,
       });
       break;
     case ADDRESS_TYPES.segwit:
-      payment = bitcoin.payments.p2wpkh({ pubkey: publicKey });
+      payment = bitcoin.payments.p2wpkh({ pubkey: publicKey, network });
       break;
     case ADDRESS_TYPES.segwitWrapped:
       // P2SH-P2WPKH: wrap P2WPKH in P2SH
       payment = bitcoin.payments.p2sh({
-        redeem: bitcoin.payments.p2wpkh({ pubkey: publicKey }),
+        redeem: bitcoin.payments.p2wpkh({ pubkey: publicKey, network }),
+        network,
       });
       break;
     case ADDRESS_TYPES.legacy:
     default:
-      payment = bitcoin.payments.p2pkh({ pubkey: publicKey });
+      payment = bitcoin.payments.p2pkh({ pubkey: publicKey, network });
       break;
   }
 
@@ -207,6 +230,8 @@ module.exports = {
   validateSignature,
   getFormatCompatibility,
   detectAddressType,
+  detectNetwork,
+  getNetworkName,
   detectSignatureFormat,
   showDetectedFormat,
   ADDRESS_TYPES,

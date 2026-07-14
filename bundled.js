@@ -24,6 +24,26 @@ const SIGNATURE_FORMATS = {
 };
 
 /**
+ * Detects the Bitcoin network from an extended public key prefix.
+ * Testnet keys use tpub/upub/vpub (and multisig Upub/Vpub); everything
+ * else is treated as mainnet.
+ */
+function detectNetwork(xpub) {
+  return /^(tpub|upub|vpub|Upub|Vpub)/.test(xpub)
+    ? bitcoin.networks.testnet
+    : bitcoin.networks.bitcoin;
+}
+
+/**
+ * Returns a human-readable network name for an xpub ("Mainnet" / "Testnet").
+ */
+function getNetworkName(xpub) {
+  return detectNetwork(xpub) === bitcoin.networks.testnet
+    ? "Testnet"
+    : "Mainnet";
+}
+
+/**
  * Detects the address type from a Bitcoin address string.
  */
 function detectAddressType(address) {
@@ -43,7 +63,7 @@ function detectAddressType(address) {
  * Only non-hardened derivation is possible from an xpub.
  */
 function deriveFromPath(xpub, relativePath) {
-  const node = bip32.fromBase58(xpub);
+  const node = bip32.fromBase58(xpub, detectNetwork(xpub));
 
   if (!relativePath || relativePath === "") {
     return node;
@@ -83,26 +103,29 @@ function toXOnly(pubkey) {
 function deriveAddress(xpub, relativePath, addressType = ADDRESS_TYPES.legacy) {
   const derived = deriveFromPath(xpub, relativePath);
   const publicKey = derived.publicKey;
+  const network = detectNetwork(xpub);
 
   let payment;
   switch (addressType) {
     case ADDRESS_TYPES.taproot:
       payment = bitcoin.payments.p2tr({
         internalPubkey: toXOnly(publicKey),
+        network,
       });
       break;
     case ADDRESS_TYPES.segwit:
-      payment = bitcoin.payments.p2wpkh({ pubkey: publicKey });
+      payment = bitcoin.payments.p2wpkh({ pubkey: publicKey, network });
       break;
     case ADDRESS_TYPES.segwitWrapped:
       // P2SH-P2WPKH: wrap P2WPKH in P2SH
       payment = bitcoin.payments.p2sh({
-        redeem: bitcoin.payments.p2wpkh({ pubkey: publicKey }),
+        redeem: bitcoin.payments.p2wpkh({ pubkey: publicKey, network }),
+        network,
       });
       break;
     case ADDRESS_TYPES.legacy:
     default:
-      payment = bitcoin.payments.p2pkh({ pubkey: publicKey });
+      payment = bitcoin.payments.p2pkh({ pubkey: publicKey, network });
       break;
   }
 
@@ -209,6 +232,8 @@ module.exports = {
   validateSignature,
   getFormatCompatibility,
   detectAddressType,
+  detectNetwork,
+  getNetworkName,
   detectSignatureFormat,
   showDetectedFormat,
   ADDRESS_TYPES,
@@ -496,7 +521,9 @@ let selectedXpub = null;
 const verificationResults = new Map();
 
 const pathsRegex = /\/[\dh'\/]+(?:[h'](?=\d)|[h'])/g;
-const xpubsRegex = /\b\w*xpub\w*\b/g;
+// Matches mainnet (xpub/ypub/zpub) and testnet (tpub/upub/vpub) extended
+// keys, including uppercase multisig variants, followed by a base58 body.
+const xpubsRegex = /\b[xyztuvXYZTUV]pub[1-9A-HJ-NP-Za-km-z]+/g;
 const xpubFingerprintRegex = /\b[A-Fa-f0-9]{8}\b/g;
 
 const extractMatches = (regex, input) =>
@@ -522,7 +549,7 @@ function hideElements(elementsToHide) {
 const extractPathsAndXpubsFromMultisigConfig = (multisigConfig) => {
   const xpubs = extractMatches(xpubsRegex, multisigConfig);
   const xpubFingerprints = extractMatches(xpubFingerprintRegex, multisigConfig);
-  const parts = multisigConfig.split(/\b\w*xpub\w*\b/);
+  const parts = multisigConfig.split(/\b[xyztuvXYZTUV]pub[1-9A-HJ-NP-Za-km-z]+/);
 
   return xpubs.map((xpub, index) => ({
     path: formatPath(parts[index]),
@@ -623,8 +650,14 @@ function updateDerivationDisplay() {
       ? `m${basePath}/${relativePath}`
       : `m${basePath}`;
 
+    const networkName = bitcoinUtils.getNetworkName(selectedXpub);
+
     const derivationPathResult = getElement("derivationPathResult");
     derivationPathResult.innerHTML = `
+      <div class="path-info">
+        <span class="path-label">Network:</span>
+        <strong>${networkName}</strong>
+      </div>
       <div class="path-info">
         <span class="path-label">Base path from descriptor:</span>
         <strong>m${basePath}</strong>

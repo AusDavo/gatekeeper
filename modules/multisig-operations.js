@@ -7,7 +7,9 @@ let selectedXpub = null;
 const verificationResults = new Map();
 
 const pathsRegex = /\/[\dh'\/]+(?:[h'](?=\d)|[h'])/g;
-const xpubsRegex = /\b\w*xpub\w*\b/g;
+// Matches mainnet (xpub/ypub/zpub) and testnet (tpub/upub/vpub) extended
+// keys, including uppercase multisig variants, followed by a base58 body.
+const xpubsRegex = /\b[xyztuvXYZTUV]pub[1-9A-HJ-NP-Za-km-z]+/g;
 const xpubFingerprintRegex = /\b[A-Fa-f0-9]{8}\b/g;
 
 const extractMatches = (regex, input) =>
@@ -33,7 +35,7 @@ function hideElements(elementsToHide) {
 const extractPathsAndXpubsFromMultisigConfig = (multisigConfig) => {
   const xpubs = extractMatches(xpubsRegex, multisigConfig);
   const xpubFingerprints = extractMatches(xpubFingerprintRegex, multisigConfig);
-  const parts = multisigConfig.split(/\b\w*xpub\w*\b/);
+  const parts = multisigConfig.split(/\b[xyztuvXYZTUV]pub[1-9A-HJ-NP-Za-km-z]+/);
 
   return xpubs.map((xpub, index) => ({
     path: formatPath(parts[index]),
@@ -134,8 +136,14 @@ function updateDerivationDisplay() {
       ? `m${basePath}/${relativePath}`
       : `m${basePath}`;
 
+    const networkName = bitcoinUtils.getNetworkName(selectedXpub);
+
     const derivationPathResult = getElement("derivationPathResult");
     derivationPathResult.innerHTML = `
+      <div class="path-info">
+        <span class="path-label">Network:</span>
+        <strong>${networkName}</strong>
+      </div>
       <div class="path-info">
         <span class="path-label">Base path from descriptor:</span>
         <strong>m${basePath}</strong>
