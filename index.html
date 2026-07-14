@@ -44,6 +44,10 @@
       </details>
 
       <section id="multisigSection">
+        <div class="stage-eyebrow">
+          <span class="stage-title">Setup &middot; load your wallet</span>
+          <span class="stage-rule"></span>
+        </div>
         <div id="uploadContainer">
           <label for="fileInput" id="uploadButton">
             <i class="fa-solid fa-file-import"></i>
@@ -84,6 +88,14 @@
       <section id="xpubRadioContainer"></section>
 
       <section id="elementsBelowXpub">
+        <div class="stage-eyebrow">
+          <span class="stage-title">Challenge <span id="challengeTarget" class="challenge-target"></span></span>
+          <span class="stage-rule"></span>
+        </div>
+        <div class="substep-head">
+          <span class="substep-num">1</span>
+          Derive the address &amp; write a challenge
+        </div>
         <div id="derivationControls">
           <div id="addressTypeContainer">
             <label for="addressTypeSelect">Address Type</label>
@@ -130,6 +142,11 @@
             Multisig paths require <a href="https://github.com/AusDavo/seedsigner/releases/tag/0.8.6-multisig-msg-signing" target="_blank">patched firmware</a>.
             <a href="https://blog.dpinkerton.com/posts/patching-seedsigner-multisig-message-signing/" target="_blank">Learn more</a>.
           </p>
+        </div>
+
+        <div class="substep-head substep-divider">
+          <span class="substep-num">2</span>
+          Verify the returned signature
         </div>
 
         <div id="signatureInputContainer">

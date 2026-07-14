@@ -587,6 +587,8 @@ const extractPathsAndXpubsFromMultisigConfig = (multisigConfig) => {
   }));
 };
 
+const shortenXpub = (xpub) => `${xpub.slice(0, 10)}…${xpub.slice(-6)}`;
+
 const createRadioButton = (index, entry) => {
   const radioBtn = document.createElement("input");
   radioBtn.type = "radio";
@@ -597,13 +599,27 @@ const createRadioButton = (index, entry) => {
   const label = document.createElement("label");
   label.htmlFor = `xpubRadio${index + 1}`;
 
-  const shortXpub = `${entry.xpub.slice(0, 10)}...${entry.xpub.slice(-6)}`;
-  const fingerprintFormatted =
+  const fp =
     entry.xpubFingerprint !== "unknown"
-      ? ` (fingerprint: ${entry.xpubFingerprint})`
-      : "";
+      ? entry.xpubFingerprint
+      : `Keymaster ${index + 1}`;
 
-  label.textContent = `${shortXpub}${fingerprintFormatted}`;
+  // A keymaster row: a seal (key → check once proven), the fingerprint as
+  // the identity, the truncated xpub beneath, and a trailing state chip.
+  label.innerHTML = `
+    <span class="keymaster-seal" aria-hidden="true">
+      <i class="fa-solid fa-key seal-key"></i>
+      <i class="fa-solid fa-check seal-check"></i>
+    </span>
+    <span class="keymaster-id">
+      <span class="keymaster-fp">${fp}</span>
+      <span class="keymaster-xpub">${shortenXpub(entry.xpub)}</span>
+    </span>
+    <span class="keymaster-state">
+      <span class="state-pending">Challenge <i class="fa-solid fa-chevron-right"></i></span>
+      <span class="state-proven">Proven</span>
+    </span>
+  `;
 
   return { radioBtn, label };
 };
@@ -757,6 +773,17 @@ function setupDerivationControlListeners() {
 const handleXpubRadioChange = (event) => {
   selectedXpub = event.target.value;
   if (selectedXpub) {
+    // Name the keymaster being challenged so this card reads as a continuation
+    // of the selection above, not a detached form.
+    const entry = associatedPathsAndXpubs.find((e) => e.xpub === selectedXpub);
+    const target = getElement("challengeTarget");
+    if (target && entry) {
+      target.textContent =
+        entry.xpubFingerprint !== "unknown"
+          ? entry.xpubFingerprint
+          : shortenXpub(entry.xpub);
+    }
+
     showElements(getElement("elementsBelowXpub"));
     showElements(getElement("copyButton"), "flex");
     setupDerivationControlListeners();
@@ -843,17 +870,15 @@ function updateRadioLabelStatus(xpub) {
   const label = document.querySelector(`label[for="xpubRadio${index + 1}"]`);
   if (!label) return;
 
-  // Remove existing status span if any
-  const existing = label.querySelector(".verification-status");
-  if (existing) existing.remove();
+  // The seal + state chip are swapped entirely in CSS off this class.
+  label.classList.toggle("cosigner-verified", verificationResults.has(xpub));
+}
 
-  if (verificationResults.has(xpub)) {
-    label.classList.add("cosigner-verified");
-    const span = document.createElement("span");
-    span.className = "verification-status verified";
-    span.textContent = " \u2713";
-    label.appendChild(span);
-  }
+// The M in an M-of-N descriptor \u2014 the signing threshold. Display only.
+function getQuorum() {
+  const descriptor = getElement("multisigConfigInput").value;
+  const match = descriptor.match(/sortedmulti\((\d+)/i);
+  return match ? parseInt(match[1], 10) : null;
 }
 
 function updateProgressIndicator() {
@@ -867,13 +892,37 @@ function updateProgressIndicator() {
 
   const total = associatedPathsAndXpubs.length;
   const verified = verificationResults.size;
-  progress.textContent = `${verified} of ${total} cosigners verified`;
+  const quorum = getQuorum();
 
-  if (verified > 0 && verified === total) {
-    progress.classList.add("all-verified");
-  } else {
-    progress.classList.remove("all-verified");
-  }
+  // Quorum is reached once enough keymasters have proven control to sign.
+  const quorumMet = quorum !== null && verified >= quorum;
+  const allVerified = verified > 0 && verified === total;
+
+  const thresholdLine =
+    quorum !== null
+      ? quorumMet
+        ? `<span class="quorum-threshold met"><i class="fa-solid fa-lock-open"></i> quorum of ${quorum} reached</span>`
+        : `<span class="quorum-threshold">${quorum} of ${total} needed for quorum</span>`
+      : `<span class="quorum-threshold">${total} keymasters in this wallet</span>`;
+
+  progress.innerHTML = `
+    <div class="stage-eyebrow">
+      <span class="stage-title">The quorum</span>
+      <span class="stage-rule"></span>
+    </div>
+    <div class="quorum-readout">
+      <span class="quorum-count">
+        <span class="quorum-verified">${verified}</span><span class="quorum-sep">/</span><span class="quorum-total">${total}</span>
+      </span>
+      <span class="quorum-caption">
+        keymasters proven
+        ${thresholdLine}
+      </span>
+    </div>
+  `;
+
+  progress.classList.toggle("all-verified", allVerified);
+  progress.classList.toggle("quorum-met", quorumMet);
 }
 
 function updateReceiptButtonVisibility() {
