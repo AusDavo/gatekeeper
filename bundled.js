@@ -968,7 +968,9 @@ function generateSeedsignerQr() {
   const label = getElement("qrLabel");
   const overlay = getElement("qrOverlay");
 
-  QRCode.toString(command, { type: "svg", width: 300, margin: 2, color: { dark: "#f7931a", light: "#0a0a1a" } })
+  // Standard black-on-white for reliable camera scanning (e.g. SeedSigner).
+  // Themed orange-on-dark QR codes scan poorly on device cameras (issue #21).
+  QRCode.toString(command, { type: "svg", width: 300, margin: 2, color: { dark: "#000000", light: "#ffffff" } })
     .then(function (svgString) {
       container.innerHTML = svgString;
       label.textContent = command;
