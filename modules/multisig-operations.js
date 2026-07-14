@@ -157,22 +157,18 @@ function updateDerivationDisplay() {
   updateCompatibilityWarning();
 
   try {
-    const result = bitcoinUtils.deriveAddress(
-      selectedXpub,
-      relativePath,
-      addressType
-    );
-
     const addressTypeLabels = {
       legacy: "Legacy (P2PKH)",
       "segwit-wrapped": "Wrapped SegWit (P2SH-P2WPKH)",
       segwit: "Native SegWit (P2WPKH)",
       taproot: "Taproot (P2TR)",
+      pubkey: "Public Key (compressed)",
     };
 
     const networkName = bitcoinUtils.getNetworkName(selectedXpub);
     const knownBase = isKnownBasePath(basePath);
     const fullPath = buildFullPath(basePath, relativePath);
+    const isPubkeyMode = addressType === bitcoinUtils.PUBKEY_MODE;
 
     // With a key origin we show the absolute path; without one we're honest that
     // only the path relative to the xpub is known (the address is still correct).
@@ -196,9 +192,47 @@ function updateDerivationDisplay() {
         <strong>${relativePath || "(none)"}</strong>
       </div>`;
 
-    const instructions = knownBase
-      ? `Ask your collaborator to sign a message using the private key at this path, then paste the signature below to verify.`
-      : `This descriptor didn't include the key's origin (fingerprint + path), so the absolute derivation path can't be shown &mdash; but the address above is derived correctly from the xpub. Ask your collaborator to sign a message using the private key for this address, then paste the signature below to verify.`;
+    let artifactRow;
+    let instructions;
+    if (isPubkeyMode) {
+      const publicKey = bitcoinUtils.derivePublicKey(selectedXpub, relativePath);
+      const fingerprint =
+        selectedEntry && selectedEntry.xpubFingerprint !== "unknown"
+          ? selectedEntry.xpubFingerprint
+          : null;
+      const fingerprintRow = fingerprint
+        ? `
+      <div class="path-info">
+        <span class="path-label">Master fingerprint:</span>
+        <strong>${fingerprint}</strong>
+      </div>`
+        : "";
+      // No address here on purpose: for a multisig cosigner key a single-sig
+      // address is misleading. Gatekeeper recovers the signing key and checks
+      // it against this pubkey — the same artifact a signing device shows.
+      artifactRow = `${fingerprintRow}
+      <div class="path-info">
+        <span class="path-label">Derived public key (compressed):</span>
+        <strong class="address">${publicKey}</strong>
+      </div>`;
+      instructions = knownBase
+        ? `Ask your collaborator to sign a message using the private key at this path, then paste the signature below. Gatekeeper recovers the signing key and checks it against this public key &mdash; no single-sig address is implied.`
+        : `This descriptor didn't include the key's origin (fingerprint + path), so the absolute derivation path can't be shown &mdash; but the public key above is derived correctly from the xpub. Ask your collaborator to sign a message using the private key for this path, then paste the signature below to verify.`;
+    } else {
+      const result = bitcoinUtils.deriveAddress(
+        selectedXpub,
+        relativePath,
+        addressType
+      );
+      artifactRow = `
+      <div class="path-info">
+        <span class="path-label">${addressTypeLabels[addressType]} address:</span>
+        <strong class="address">${result.address}</strong>
+      </div>`;
+      instructions = knownBase
+        ? `Ask your collaborator to sign a message using the private key at this path, then paste the signature below to verify.`
+        : `This descriptor didn't include the key's origin (fingerprint + path), so the absolute derivation path can't be shown &mdash; but the address above is derived correctly from the xpub. Ask your collaborator to sign a message using the private key for this address, then paste the signature below to verify.`;
+    }
 
     const derivationPathResult = getElement("derivationPathResult");
     derivationPathResult.innerHTML = `
@@ -207,10 +241,7 @@ function updateDerivationDisplay() {
         <strong>${networkName}</strong>
       </div>
       ${pathRows}
-      <div class="path-info">
-        <span class="path-label">${addressTypeLabels[addressType]} address:</span>
-        <strong class="address">${result.address}</strong>
-      </div>
+      ${artifactRow}
       <p class="instructions">
         ${instructions}
       </p>
@@ -459,22 +490,38 @@ function evaluateSignature() {
       throw new Error("No xpub selected");
     }
 
-    const result = bitcoinUtils.deriveAddress(
-      currentXpub,
-      relativePath,
-      addressType
-    );
-
     if (signatureInputValue.length === 0) {
       throw new Error("Signature is absent");
     }
 
-    const isValid = bitcoinUtils.validateSignature(
-      messageInputValue,
-      signatureInputValue,
-      result.address,
-      signatureFormat
-    );
+    let verifiedAddress = null;
+    let verifiedPublicKey = null;
+    let isValid;
+    if (addressType === bitcoinUtils.PUBKEY_MODE) {
+      verifiedPublicKey = bitcoinUtils.derivePublicKey(
+        currentXpub,
+        relativePath
+      );
+      isValid = bitcoinUtils.validateSignatureAgainstPubkey(
+        messageInputValue,
+        signatureInputValue,
+        verifiedPublicKey,
+        signatureFormat
+      );
+    } else {
+      const result = bitcoinUtils.deriveAddress(
+        currentXpub,
+        relativePath,
+        addressType
+      );
+      verifiedAddress = result.address;
+      isValid = bitcoinUtils.validateSignature(
+        messageInputValue,
+        signatureInputValue,
+        result.address,
+        signatureFormat
+      );
+    }
 
     const selectedEntry = associatedPathsAndXpubs.find(
       (entry) => entry.xpub === currentXpub
@@ -487,7 +534,8 @@ function evaluateSignature() {
       verified: isValid,
       message: messageInputValue,
       signature: signatureInputValue,
-      address: result.address,
+      address: verifiedAddress,
+      publicKey: verifiedPublicKey,
       fullPath,
       addressType,
       signatureFormat,
@@ -596,8 +644,13 @@ function generateReceipt() {
       md += `- **Xpub:** ${shortXpub}\n`;
       md += `- **Fingerprint:** ${result.fingerprint}\n`;
       md += `- **Path:** ${result.fullPath}\n`;
-      md += `- **Address:** ${result.address}\n`;
-      md += `- **Address type:** ${result.addressType}\n`;
+      if (result.addressType === bitcoinUtils.PUBKEY_MODE) {
+        md += `- **Public key:** ${result.publicKey}\n`;
+        md += `- **Verified against:** Public key (script-type agnostic)\n`;
+      } else {
+        md += `- **Address:** ${result.address}\n`;
+        md += `- **Address type:** ${result.addressType}\n`;
+      }
       md += `- **Message:** ${result.message}\n`;
       md += `- **Signature:** ${result.signature}\n`;
       md += `- **Format:** ${result.signatureFormat}\n`;

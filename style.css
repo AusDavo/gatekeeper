@@ -1191,7 +1191,8 @@ footer {
   width: 100%;
 }
 
-footer p {
+footer p,
+footer .footer-donation {
   margin: 8px 0;
   font-size: 0.8125rem;
   color: var(--text-dim);
