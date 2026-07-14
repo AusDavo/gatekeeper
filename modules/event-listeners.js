@@ -33,6 +33,12 @@ const handleButtonClick = (buttonId) => {
 const addEventListeners = () => {
   document.body.addEventListener("input", uiInteraction.handleInput);
 
+  // Theme toggle (persists choice; pre-paint script in index.html applies it)
+  document.getElementById("themeToggle").addEventListener("click", () => {
+    const isLight = document.documentElement.classList.toggle("light");
+    localStorage.setItem("theme", isLight ? "light" : "dark");
+  });
+
   document
     .getElementById("fileInput")
     .addEventListener("change", fileHandling.handleFileUpload);

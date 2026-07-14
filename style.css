@@ -18,8 +18,8 @@
   --border: #1e1e2e;
   --border-subtle: #161622;
 
-  --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
-  --font-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', Consolas, monospace;
+  --font-family: 'Geist', -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Geist Mono', 'Fira Code', 'SF Mono', Consolas, monospace;
 
   --radius-sm: 6px;
   --radius-md: 8px;
@@ -33,6 +33,33 @@
   --transition-normal: 250ms ease;
 }
 
+html.light {
+  --bg: #f5f5f0;
+  --bg-surface: #ffffff;
+  --bg-elevated: #fafaf8;
+  --bg-input: #ffffff;
+
+  --text: #1a1a1a;
+  --text-muted: #6b6560;
+  --text-dim: #9a9490;
+
+  --accent: #e07800;
+  --accent-hover: #c86a00;
+  --success: #16a34a;
+  --danger: #dc2626;
+  --warning: #b45309;
+  --info: #2563eb;
+
+  --border: #e0ddd8;
+  --border-subtle: #ebe8e3;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+
+  color-scheme: light;
+}
+
 *,
 *::before,
 *::after {
@@ -44,6 +71,19 @@ html {
   color-scheme: dark;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Subtle film-grain texture overlay */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 256px 256px;
 }
 
 ::selection {
@@ -79,6 +119,7 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* Typography */
@@ -957,4 +998,42 @@ footer a:hover {
   .signature-actions {
     flex-direction: column;
   }
+}
+
+/* Theme toggle */
+.theme-toggle {
+  position: fixed;
+  bottom: 1.25rem;
+  right: 1.25rem;
+  z-index: 9998;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--bg-surface);
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+}
+
+.theme-toggle:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* Show the sun in dark mode (click to go light), the moon in light mode. */
+.theme-toggle .theme-icon-moon {
+  display: none;
+}
+
+html.light .theme-toggle .theme-icon-sun {
+  display: none;
+}
+
+html.light .theme-toggle .theme-icon-moon {
+  display: block;
 }
