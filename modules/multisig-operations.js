@@ -440,7 +440,7 @@ function generateSeedsignerQr() {
     : `m${basePath}`;
 
   const message = getElement("messageInput").value || "";
-  const command = `signmessage: ${fullPath} ascii:${message}`;
+  const command = `signmessage ${fullPath} ascii:${message}`;
 
   const container = getElement("qrSvgContainer");
   const label = getElement("qrLabel");
