@@ -322,6 +322,11 @@ const addEventListeners = () => {
     }
   });
 
+  // QR modal close button
+  document.getElementById("qrModalClose").addEventListener("click", () => {
+    document.getElementById("qrOverlay").classList.remove("visible");
+  });
+
   // ESC key closes overlays and scanner
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape") {
@@ -926,16 +931,24 @@ function updateProgressIndicator() {
 }
 
 function updateReceiptButtonVisibility() {
-  const btn = getElement("downloadReceiptButton");
-  if (!btn) return;
-  btn.style.display = verificationResults.size > 0 ? "inline-flex" : "none";
+  const group = getElement("receiptReady");
+  if (!group) return;
+  group.style.display = verificationResults.size > 0 ? "flex" : "none";
 }
 
 const logSignatureValidationResult = (isValid, errorMessage, verificationData) => {
   const resultElement = getElement("validationResult");
 
   if (isValid) {
-    resultElement.textContent = "Signature is valid!";
+    const fp =
+      verificationData &&
+      verificationData.fingerprint &&
+      verificationData.fingerprint !== "unknown"
+        ? verificationData.fingerprint
+        : null;
+    resultElement.innerHTML = fp
+      ? `<i class="fa-solid fa-circle-check"></i><span>Verified &mdash; <strong>${fp}</strong> controls this key</span>`
+      : `<i class="fa-solid fa-circle-check"></i><span>Signature verified</span>`;
     resultElement.classList.add("success");
 
     if (verificationData && verificationData.xpub) {
@@ -945,7 +958,9 @@ const logSignatureValidationResult = (isValid, errorMessage, verificationData) =
       updateReceiptButtonVisibility();
     }
   } else {
-    resultElement.textContent = errorMessage || "Signature is NOT valid!";
+    resultElement.innerHTML = `<i class="fa-solid fa-circle-xmark"></i><span>${
+      errorMessage || "Signature could not be verified"
+    }</span>`;
     resultElement.classList.remove("success");
   }
 };

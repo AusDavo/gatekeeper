@@ -197,10 +197,19 @@
       </section>
 
       <section id="importDescriptorContainer">
-        <button id="downloadReceiptButton">
-          <i class="fa-solid fa-file-arrow-down"></i>
-          Download Receipt
-        </button>
+        <div id="receiptReady">
+          <div class="stage-eyebrow">
+            <span class="stage-title">Receipt</span>
+            <span class="stage-rule"></span>
+          </div>
+          <p class="receipt-hint">
+            A timestamped record of which keymasters proved control &mdash; verifiable and safe to share.
+          </p>
+          <button id="downloadReceiptButton">
+            <i class="fa-solid fa-file-arrow-down"></i>
+            Download receipt
+          </button>
+        </div>
         <button id="importDescriptorButton">
           <i class="fa-solid fa-rotate"></i>
           Import a new descriptor
@@ -243,6 +252,12 @@
 
     <div id="qrOverlay">
       <div id="qrModal">
+        <button id="qrModalClose" type="button" aria-label="Close QR code">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+        <div class="stage-eyebrow">
+          <span class="stage-title">SeedSigner signing QR</span>
+        </div>
         <div id="qrSvgContainer"></div>
         <p id="qrLabel"></p>
       </div>

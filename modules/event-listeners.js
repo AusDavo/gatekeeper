@@ -65,6 +65,11 @@ const addEventListeners = () => {
     }
   });
 
+  // QR modal close button
+  document.getElementById("qrModalClose").addEventListener("click", () => {
+    document.getElementById("qrOverlay").classList.remove("visible");
+  });
+
   // ESC key closes overlays and scanner
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape") {
