@@ -617,12 +617,18 @@ const pathsRegex = /\/[\dh'\/]+(?:[h'](?=\d)|[h'])/g;
 // Matches mainnet (xpub/ypub/zpub) and testnet (tpub/upub/vpub) extended
 // keys, including uppercase multisig variants, followed by a base58 body.
 const xpubsRegex = /\b[xyztuvXYZTUV]pub[1-9A-HJ-NP-Za-km-z]+/g;
-const xpubFingerprintRegex = /\b[A-Fa-f0-9]{8}\b/g;
+
+// A key origin as a descriptor writes it — [fingerprint/path] sitting
+// immediately before its key. Anchored to the end of the text preceding the
+// key so the fingerprint and the path are captured together, from that key's
+// own bracket, and can never be attributed to a neighbour (issue #24).
+const keyOriginRegex = /\[\s*([0-9a-fA-F]{8})((?:\/\d+['h]?)*)\s*\]\s*$/;
 
 const extractMatches = (regex, input) =>
   [...input.matchAll(regex)].map((match) => match[0]);
 
 const UNKNOWN_PATH = "unknown";
+const UNKNOWN_FINGERPRINT = "unknown";
 
 const formatPath = (path) =>
   (path.match(pathsRegex) || [UNKNOWN_PATH])[0].replace(/h/g, "'");
@@ -664,14 +670,32 @@ function hideElements(elementsToHide) {
 
 const extractPathsAndXpubsFromMultisigConfig = (multisigConfig) => {
   const xpubs = extractMatches(xpubsRegex, multisigConfig);
-  const xpubFingerprints = extractMatches(xpubFingerprintRegex, multisigConfig);
-  const parts = multisigConfig.split(/\b[xyztuvXYZTUV]pub[1-9A-HJ-NP-Za-km-z]+/);
+  // Splitting on the keys bounds each chunk to the text between one key and
+  // the next, so nothing found in a chunk can belong to another key.
+  const parts = multisigConfig.split(xpubsRegex);
 
-  return xpubs.map((xpub, index) => ({
-    path: formatPath(parts[index]),
-    xpub,
-    xpubFingerprint: xpubFingerprints[index] || "unknown",
-  }));
+  return xpubs.map((xpub, index) => {
+    const preceding = parts[index] || "";
+    const origin = preceding.match(keyOriginRegex);
+
+    // With an origin bracket both fields come from it. Without one the
+    // fingerprint is genuinely unknown — say so rather than borrow a
+    // fingerprint that belongs to a different cosigner.
+    if (origin) {
+      const [, fingerprint, originPath] = origin;
+      return {
+        path: originPath ? originPath.replace(/h/g, "'") : UNKNOWN_PATH,
+        xpub,
+        xpubFingerprint: fingerprint,
+      };
+    }
+
+    return {
+      path: formatPath(preceding),
+      xpub,
+      xpubFingerprint: UNKNOWN_FINGERPRINT,
+    };
+  });
 };
 
 const shortenXpub = (xpub) => `${xpub.slice(0, 10)}…${xpub.slice(-6)}`;
@@ -687,7 +711,7 @@ const createRadioButton = (index, entry) => {
   label.htmlFor = `xpubRadio${index + 1}`;
 
   const fp =
-    entry.xpubFingerprint !== "unknown"
+    entry.xpubFingerprint !== UNKNOWN_FINGERPRINT
       ? entry.xpubFingerprint
       : `Keymaster ${index + 1}`;
 
@@ -757,7 +781,7 @@ function updateDerivationDisplay() {
   const selectedEntry = associatedPathsAndXpubs.find(
     (entry) => entry.xpub === selectedXpub
   );
-  const basePath = selectedEntry ? selectedEntry.path : "unknown";
+  const basePath = selectedEntry ? selectedEntry.path : UNKNOWN_PATH;
   const { addressType, relativePath } = getDerivationSettings();
 
   // Update compatibility warning
@@ -804,7 +828,7 @@ function updateDerivationDisplay() {
     if (isPubkeyMode) {
       const publicKey = bitcoinUtils.derivePublicKey(selectedXpub, relativePath);
       const fingerprint =
-        selectedEntry && selectedEntry.xpubFingerprint !== "unknown"
+        selectedEntry && selectedEntry.xpubFingerprint !== UNKNOWN_FINGERPRINT
           ? selectedEntry.xpubFingerprint
           : null;
       const fingerprintRow = fingerprint
@@ -897,7 +921,7 @@ const handleXpubRadioChange = (event) => {
     const target = getElement("challengeTarget");
     if (target && entry) {
       target.textContent =
-        entry.xpubFingerprint !== "unknown"
+        entry.xpubFingerprint !== UNKNOWN_FINGERPRINT
           ? entry.xpubFingerprint
           : shortenXpub(entry.xpub);
     }
@@ -1056,7 +1080,7 @@ const logSignatureValidationResult = (isValid, errorMessage, verificationData) =
     const fp =
       verificationData &&
       verificationData.fingerprint &&
-      verificationData.fingerprint !== "unknown"
+      verificationData.fingerprint !== UNKNOWN_FINGERPRINT
         ? verificationData.fingerprint
         : null;
     resultElement.innerHTML = fp
@@ -1146,7 +1170,7 @@ function evaluateSignature() {
       fullPath,
       addressType,
       signatureFormat,
-      fingerprint: selectedEntry ? selectedEntry.xpubFingerprint : "unknown",
+      fingerprint: selectedEntry ? selectedEntry.xpubFingerprint : UNKNOWN_FINGERPRINT,
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
@@ -1241,7 +1265,7 @@ function generateReceipt() {
   md += `---\n`;
 
   associatedPathsAndXpubs.forEach((entry, index) => {
-    const fp = entry.xpubFingerprint !== "unknown" ? entry.xpubFingerprint : "N/A";
+    const fp = entry.xpubFingerprint !== UNKNOWN_FINGERPRINT ? entry.xpubFingerprint : "N/A";
     md += `\n## Cosigner ${index + 1}: ${fp}\n\n`;
 
     const result = verificationResults.get(entry.xpub);
