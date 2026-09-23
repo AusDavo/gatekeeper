@@ -23,6 +23,15 @@ const extractMatches = (regex, input) =>
 const UNKNOWN_PATH = "unknown";
 const UNKNOWN_FINGERPRINT = "unknown";
 
+// For text that reaches innerHTML but can carry user input — the relative
+// path, and error messages that quote it (issue #26).
+const escapeHtml = (text) =>
+  String(text).replace(
+    /[&<>"']/g,
+    (ch) =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]
+  );
+
 const formatPath = (path) =>
   (path.match(pathsRegex) || [UNKNOWN_PATH])[0].replace(/h/g, "'");
 
@@ -257,7 +266,7 @@ function updateDerivationDisplay() {
       </div>
       <div class="path-info">
         <span class="path-label">Full derivation path:</span>
-        <strong>${fullPath}</strong>
+        <strong>${escapeHtml(fullPath)}</strong>
       </div>`
       : `
       <div class="path-info">
@@ -266,7 +275,7 @@ function updateDerivationDisplay() {
       </div>
       <div class="path-info">
         <span class="path-label">Path relative to this xpub:</span>
-        <strong>${relativePath || "(none)"}</strong>
+        <strong>${relativePath ? escapeHtml(relativePath) : "(none)"}</strong>
       </div>`;
 
     let artifactRow;
@@ -330,7 +339,7 @@ function updateDerivationDisplay() {
     derivationPathResult.innerHTML = `
       <div class="error-message">
         <i class="fa-solid fa-circle-exclamation"></i>
-        ${error.message}
+        ${escapeHtml(error.message)}
       </div>
     `;
     derivationPathResult.classList.add("error");
@@ -543,9 +552,9 @@ const logSignatureValidationResult = (isValid, errorMessage, verificationData) =
     // A failed evaluation of the inputs on screen means this cosigner is not
     // proven by them, whatever an earlier evaluation found.
     revokeVerification(verificationData && verificationData.xpub);
-    resultElement.innerHTML = `<i class="fa-solid fa-circle-xmark"></i><span>${
+    resultElement.innerHTML = `<i class="fa-solid fa-circle-xmark"></i><span>${escapeHtml(
       errorMessage || "Signature could not be verified"
-    }</span>`;
+    )}</span>`;
     resultElement.classList.remove("success");
   }
 };
