@@ -3,9 +3,10 @@
   "version": "1.2.0",
   "description": "Bitcoin multisig wallet signature verification tool",
   "scripts": {
-    "build": "npm run build:icons && esbuild main.js --bundle --platform=browser --format=iife --inject:scripts/buffer-shim.js --outfile=bundled.js",
+    "build": "npm run build:icons && esbuild main.js --bundle --platform=browser --format=iife --inject:scripts/buffer-shim.js --outfile=bundled.js && npm run build:hash",
     "build:icons": "node scripts/build-icons.js",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "build:hash": "node scripts/hash-assets.js"
   },
   "dependencies": {
     "@bitcoinerlab/secp256k1": "^1.1.1",
