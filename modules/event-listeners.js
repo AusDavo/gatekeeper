@@ -33,6 +33,11 @@ const handleButtonClick = (buttonId) => {
 const addEventListeners = () => {
   document.body.addEventListener("input", uiInteraction.handleInput);
 
+  // A proof is bound to the message it signed; editing the message unseals it.
+  document
+    .getElementById("messageInput")
+    .addEventListener("input", multisigOperations.revokeStaleVerification);
+
   // Theme toggle (persists choice; pre-paint script in index.html applies it)
   document.getElementById("themeToggle").addEventListener("click", () => {
     const isLight = document.documentElement.classList.toggle("light");

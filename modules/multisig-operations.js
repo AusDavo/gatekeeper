@@ -146,6 +146,45 @@ function getDerivationSettings() {
   return { addressType, relativePath, signatureFormat };
 }
 
+// The message the signature is checked against — an empty box means "default".
+const getChallengeMessage = () => getElement("messageInput").value || "default";
+
+// A proof holds only for the inputs it was made with. If any input that
+// shapes the claim (what key, which path, what message) has moved, the seal
+// would be asserting something that was never verified (issue #23).
+function matchesCurrentContext(result) {
+  const { addressType, relativePath } = getDerivationSettings();
+  return (
+    result.addressType === addressType &&
+    result.relativePath === relativePath &&
+    result.message === getChallengeMessage()
+  );
+}
+
+function refreshVerificationState(xpub) {
+  updateRadioLabelStatus(xpub);
+  updateProgressIndicator();
+  updateReceiptButtonVisibility();
+}
+
+function revokeVerification(xpub) {
+  if (!xpub || !verificationResults.delete(xpub)) return;
+  refreshVerificationState(xpub);
+}
+
+// Called when a derivation control or the challenge message changes. Only the
+// selected cosigner is judged against the on-screen inputs — the others keep
+// the proofs they earned under their own recorded context.
+function revokeStaleVerification() {
+  const result = selectedXpub && verificationResults.get(selectedXpub);
+  if (result && !matchesCurrentContext(result)) revokeVerification(selectedXpub);
+}
+
+function handleDerivationControlChange() {
+  revokeStaleVerification();
+  updateDerivationDisplay();
+}
+
 function updateCompatibilityWarning() {
   const { addressType, signatureFormat } = getDerivationSettings();
   const warning = getElement("taprootWarning");
@@ -300,8 +339,8 @@ function setupDerivationControlListeners() {
   relativePathInput.parentNode.replaceChild(newPathInput, relativePathInput);
   signatureFormatSelect.parentNode.replaceChild(newFormatSelect, signatureFormatSelect);
 
-  newAddressSelect.addEventListener("change", updateDerivationDisplay);
-  newPathInput.addEventListener("input", updateDerivationDisplay);
+  newAddressSelect.addEventListener("change", handleDerivationControlChange);
+  newPathInput.addEventListener("input", handleDerivationControlChange);
   newFormatSelect.addEventListener("change", updateCompatibilityWarning);
 }
 
@@ -483,11 +522,12 @@ const logSignatureValidationResult = (isValid, errorMessage, verificationData) =
 
     if (verificationData && verificationData.xpub) {
       verificationResults.set(verificationData.xpub, verificationData);
-      updateRadioLabelStatus(verificationData.xpub);
-      updateProgressIndicator();
-      updateReceiptButtonVisibility();
+      refreshVerificationState(verificationData.xpub);
     }
   } else {
+    // A failed evaluation of the inputs on screen means this cosigner is not
+    // proven by them, whatever an earlier evaluation found.
+    revokeVerification(verificationData && verificationData.xpub);
     resultElement.innerHTML = `<i class="fa-solid fa-circle-xmark"></i><span>${
       errorMessage || "Signature could not be verified"
     }</span>`;
@@ -499,14 +539,14 @@ function evaluateSignature() {
   const { addressType, relativePath, signatureFormat } = getDerivationSettings();
 
   const signatureInputValue = getElement("signatureInput").value.trim();
-  const messageInputValue = getElement("messageInput").value || "default";
+  const messageInputValue = getChallengeMessage();
 
   const selectedRadio = document.querySelector(
     'input[name="xpubRadio"]:checked'
   );
 
+  let currentXpub;
   try {
-    let currentXpub;
     if (selectedRadio) {
       const index = parseInt(selectedRadio.id.replace("xpubRadio", "")) - 1;
       currentXpub = associatedPathsAndXpubs[index].xpub;
@@ -561,13 +601,14 @@ function evaluateSignature() {
       address: verifiedAddress,
       publicKey: verifiedPublicKey,
       fullPath,
+      relativePath,
       addressType,
       signatureFormat,
       fingerprint: selectedEntry ? selectedEntry.xpubFingerprint : UNKNOWN_FINGERPRINT,
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    logSignatureValidationResult(false, error.message);
+    logSignatureValidationResult(false, error.message, { xpub: currentXpub });
   }
 }
 
@@ -702,6 +743,7 @@ module.exports = {
   extractXpubsAndPopulateRadioButtons,
   importMultisigDescriptor,
   evaluateSignature,
+  revokeStaleVerification,
   generateExportText,
   exportToFile,
   generateSeedsignerQr,
