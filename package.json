@@ -3,7 +3,8 @@
   "version": "1.2.0",
   "description": "Bitcoin multisig wallet signature verification tool",
   "scripts": {
-    "build": "browserify main.js -o bundled.js",
+    "build": "npm run build:icons && browserify main.js -o bundled.js",
+    "build:icons": "node scripts/build-icons.js",
     "format": "prettier --write ."
   },
   "dependencies": {
@@ -16,6 +17,7 @@
     "qrcode": "^1.5.4"
   },
   "devDependencies": {
+    "@fortawesome/fontawesome-free": "6.7.2",
     "browserify": "^17.0.0",
     "buffer": "^6.0.3",
     "prettier": "^3.1.1"

@@ -650,7 +650,7 @@ input[type="radio"] {
 }
 
 #xpubRadioContainer label.cosigner-verified .seal-check {
-  display: inline;
+  display: inline-block;
 }
 
 #xpubRadioContainer label.cosigner-verified .keymaster-fp {

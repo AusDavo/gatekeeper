@@ -2,26 +2,21 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <!-- Descriptors pasted here must never leave the browser, so nothing may be
+         loaded from, or sent to, anywhere but this origin (issue #27). -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; base-uri 'none'; form-action 'none'"
+    />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Verify Bitcoin multisig wallet collaborators by validating cryptographic signatures" />
     <meta name="color-scheme" content="dark light" />
     <meta name="theme-color" content="#08080f" />
     <title>Gatekeeper - Bitcoin Signature Validation</title>
-    <script>
-      // Apply saved/preferred theme before first paint to avoid a flash.
-      (function () {
-        var t = localStorage.getItem("theme");
-        if (t === "light" || (!t && window.matchMedia("(prefers-color-scheme: light)").matches)) {
-          document.documentElement.classList.add("light");
-        }
-      })();
-    </script>
+    <script src="theme-init.js"></script>
     <link rel="preload" href="fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="icons.css" />
     <link rel="stylesheet" href="style.css" />
-    <script
-      src="https://kit.fontawesome.com/2d818d2cc6.js"
-      crossorigin="anonymous"
-    ></script>
   </head>
 
   <body>

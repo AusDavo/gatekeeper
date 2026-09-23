@@ -54,6 +54,7 @@ Useful for onboarding a new multisig, periodic key-liveness checks, inheritance/
 
 - **Fully client-side.** All parsing, derivation, and verification happen in the browser — there is no backend and no network request carries your data.
 - Gatekeeper only ever handles **public** keys and signatures. Never paste a private key or seed phrase; it doesn't ask for one and has no use for one.
+- **No third-party code.** Every script, stylesheet, font and icon is served from the app's own origin, and a strict Content-Security-Policy blocks the page from loading or sending anything elsewhere.
 - The app is a set of static files, so you can host it yourself or run it offline (see below).
 
 ## Run locally
@@ -62,7 +63,7 @@ Useful for onboarding a new multisig, periodic key-liveness checks, inheritance/
 git clone https://github.com/AusDavo/gatekeeper.git
 cd gatekeeper
 npm install
-npm run build      # bundles main.js + modules into bundled.js
+npm run build      # generates icons.css, then bundles main.js + modules into bundled.js
 ```
 
 Then serve the folder with any static file server, for example:
@@ -74,7 +75,7 @@ npx serve .
 
 Open the printed URL. To run offline, load `index.html` after building.
 
-> The bundled output (`bundled.js`) is committed so the site can be served without a build step. If you change any JavaScript, re-run `npm run build` and commit the rebuilt bundle alongside your source changes.
+> The bundled output (`bundled.js`) is committed so the site can be served without a build step. If you change any JavaScript, or use a new icon, re-run `npm run build` and commit the rebuilt `bundled.js` and `icons.css` alongside your source changes.
 
 ## Tech stack
 
@@ -86,13 +87,15 @@ Plain JavaScript, bundled with [browserify](https://browserify.org/) — no fram
 - [bip322-js](https://github.com/ACken2/bip322-js) — BIP-322 / SegWit verification
 - [qrcode](https://github.com/soldair/node-qrcode) + [html5-qrcode](https://github.com/mebjas/html5-qrcode) — QR generation and scanning
 
-Fonts (Geist Sans + Geist Mono) are self-hosted; the app makes no third-party requests for data.
+Fonts (Geist Sans + Geist Mono) and icons ([Font Awesome Free](https://fontawesome.com), CC BY 4.0) are self-hosted; the app makes no third-party requests.
 
 ## Project structure
 
 ```
-index.html                  markup + pre-paint theme script
+index.html                  markup + Content-Security-Policy
+theme-init.js               pre-paint theme script
 style.css                   design tokens (light/dark) + styles
+icons.css                   generated icon masks (scripts/build-icons.js)
 main.js                     entry point
 modules/                    UI, file/QR handling, multisig operations
 bitcoin-utils.js            derivation & signature verification
