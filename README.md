@@ -63,7 +63,7 @@ Useful for onboarding a new multisig, periodic key-liveness checks, inheritance/
 git clone https://github.com/AusDavo/gatekeeper.git
 cd gatekeeper
 npm install
-npm run build      # generates icons.css, then bundles main.js + modules into bundled.js
+npm run build      # generates icons.css, bundles main.js + modules into bundled.js, then stamps asset hashes into index.html
 ```
 
 Then serve the folder with any static file server, for example:
@@ -75,7 +75,7 @@ npx serve .
 
 Open the printed URL. To run offline, load `index.html` after building.
 
-> The bundled output (`bundled.js`) is committed so the site can be served without a build step. If you change any JavaScript, or use a new icon, re-run `npm run build` and commit the rebuilt `bundled.js` and `icons.css` alongside your source changes.
+> The bundled output (`bundled.js`) is committed so the site can be served without a build step. If you change any JavaScript or CSS, or use a new icon, re-run `npm run build` and commit the rebuilt `bundled.js`, `icons.css` and `index.html` alongside your source changes. The build stamps each script and stylesheet URL in `index.html` with a content hash (`?h=…`), so returning visitors pick up the new files instead of a stale cache.
 
 ## Tech stack
 
