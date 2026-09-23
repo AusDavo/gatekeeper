@@ -792,6 +792,20 @@ function revokeStaleVerification() {
   if (result && !matchesCurrentContext(result)) revokeVerification(selectedXpub);
 }
 
+// Selecting a proven cosigner puts back the inputs it was proven with, so the
+// seal never sits beside a path or message it didn't verify. Assigning .value
+// fires no input/change events, so this can't trip the revocation above.
+function restoreVerifiedContext(xpub) {
+  const result = verificationResults.get(xpub);
+  if (!result) return;
+  getElement("addressTypeSelect").value = result.addressType;
+  getElement("relativePathInput").value = result.relativePath;
+  getElement("signatureFormatSelect").value = result.signatureFormat;
+  if (getChallengeMessage() !== result.message) {
+    getElement("messageInput").value = result.message;
+  }
+}
+
 function handleDerivationControlChange() {
   revokeStaleVerification();
   updateDerivationDisplay();
@@ -973,6 +987,7 @@ const handleXpubRadioChange = (event) => {
     showElements(getElement("elementsBelowXpub"));
     showElements(getElement("copyButton"), "flex");
     setupDerivationControlListeners();
+    restoreVerifiedContext(selectedXpub);
     updateDerivationDisplay();
 
     const copyButton = getElement("copyButton");
