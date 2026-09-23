@@ -63,7 +63,7 @@ function parseColdcardSignedFile(text) {
 
   if (!sig || sig.length === 0) return null;
 
-  return { signature: sig, format: "bip137" };
+  return { signature: sig };
 }
 
 function handleSignatureFileUpload(event) {
@@ -78,7 +78,6 @@ function handleSignatureFileUpload(event) {
     const coldcard = parseColdcardSignedFile(text);
     if (coldcard) {
       document.getElementById("signatureInput").value = coldcard.signature;
-      document.getElementById("signatureFormatSelect").value = coldcard.format;
 
       const bitcoinUtils = require("../bitcoin-utils");
       bitcoinUtils.showDetectedFormat(coldcard.signature);

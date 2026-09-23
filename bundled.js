@@ -227,12 +227,25 @@ function validateSignature(message, signature, address, signatureFormat) {
   // For SegWit and wrapped SegWit, use bip322-js
   // BIP-137 uses strict mode, Electrum uses loose mode
   const strictMode = signatureFormat === SIGNATURE_FORMATS.bip137;
-  return Verifier.verifySignature(address, message, signature, strictMode);
+  const isValid = Verifier.verifySignature(address, message, signature, strictMode);
+
+  // Strict mode only adds a header-byte check on top of loose mode's key
+  // recovery, so an Electrum signature fails it despite proving the key.
+  // Say so rather than report a bare failure (issue #25).
+  if (!isValid && strictMode && Verifier.verifySignature(address, message, signature, false)) {
+    throw new Error(
+      "Signature is valid as Standard (Electrum), but its header byte doesn't follow BIP-137 for this address type. Switch the format to Standard (Electrum)."
+    );
+  }
+  return isValid;
 }
 
+const ECDSA_FORMATS = [SIGNATURE_FORMATS.electrum, SIGNATURE_FORMATS.bip137];
+
 /**
- * Detects the signature format from a base64-encoded signature.
- * BIP-137: 65 bytes with header byte 27-42
+ * Detects the signature family from a base64-encoded signature.
+ * Recoverable ECDSA: 65 bytes with header byte 27-42. Electrum and BIP-137
+ * share this shape, so the two can't be told apart from the bytes alone.
  * Otherwise: assume BIP-322
  */
 function detectSignatureFormat(signature) {
@@ -241,17 +254,23 @@ function detectSignatureFormat(signature) {
     if (buf.length === 65) {
       const header = buf[0];
       if (header >= 27 && header <= 42) {
-        return { format: "bip137", label: "BIP-137 (ECDSA)" };
+        return {
+          format: SIGNATURE_FORMATS.electrum,
+          family: "ecdsa",
+          label: "Recoverable ECDSA (Electrum / BIP-137)",
+        };
       }
     }
   } catch (e) {
     // Not valid base64
   }
-  return { format: "bip322", label: "BIP-322" };
+  return { format: SIGNATURE_FORMATS.bip322, family: "bip322", label: "BIP-322" };
 }
 
 /**
- * Updates the format detection display and optionally sets the format dropdown.
+ * Updates the format detection display, and moves the format dropdown only
+ * when it names the wrong family. A choice between Electrum and BIP-137 is
+ * left alone — detection can't make it (issue #25).
  */
 function showDetectedFormat(signature) {
   const display = document.getElementById("signatureFormatDetected");
@@ -265,10 +284,13 @@ function showDetectedFormat(signature) {
   const detected = detectSignatureFormat(signature);
   display.textContent = "Detected: " + detected.label;
 
-  // Auto-set the format dropdown
   const select = document.getElementById("signatureFormatSelect");
-  if (select) {
+  if (!select) return;
+  const selectedIsEcdsa = ECDSA_FORMATS.includes(select.value);
+  if (selectedIsEcdsa !== (detected.family === "ecdsa")) {
     select.value = detected.format;
+    // Let the compatibility warning react as if the user had changed it.
+    select.dispatchEvent(new Event("change"));
   }
 }
 
@@ -557,7 +579,7 @@ function parseColdcardSignedFile(text) {
 
   if (!sig || sig.length === 0) return null;
 
-  return { signature: sig, format: "bip137" };
+  return { signature: sig };
 }
 
 function handleSignatureFileUpload(event) {
@@ -572,7 +594,6 @@ function handleSignatureFileUpload(event) {
     const coldcard = parseColdcardSignedFile(text);
     if (coldcard) {
       document.getElementById("signatureInput").value = coldcard.signature;
-      document.getElementById("signatureFormatSelect").value = coldcard.format;
 
       const bitcoinUtils = require("../bitcoin-utils");
       bitcoinUtils.showDetectedFormat(coldcard.signature);
