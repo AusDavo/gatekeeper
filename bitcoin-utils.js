@@ -2,8 +2,9 @@
 const ecc = require("@bitcoinerlab/secp256k1");
 const { BIP32Factory } = require("bip32");
 const bitcoin = require("bitcoinjs-lib");
-const bitcoinMessage = require("bitcoinjs-message");
 const { Verifier } = require("bip322-js");
+const { sha256 } = require("@noble/hashes/sha2.js");
+const { bytesToHex, concatBytes, utf8ToBytes } = require("@noble/hashes/utils.js");
 
 // Initialize BIP32 with the secp256k1 library
 const bip32 = BIP32Factory(ecc);
@@ -27,6 +28,33 @@ const SIGNATURE_FORMATS = {
   bip137: "bip137", // BIP-137 (Trezor) format (ECDSA with address type header)
   bip322: "bip322", // BIP-322 (Simple) format (works with all address types)
 };
+
+/**
+ * Decodes a base64 string to bytes. Throws on malformed input.
+ */
+function base64ToBytes(b64) {
+  return Uint8Array.from(atob(b64.trim()), (c) => c.charCodeAt(0));
+}
+
+/**
+ * Bitcoin's CompactSize (varint) length prefix.
+ */
+function encodeVarint(n) {
+  if (n < 0xfd) return Uint8Array.of(n);
+  if (n <= 0xffff) return Uint8Array.of(0xfd, n & 0xff, n >> 8);
+  return Uint8Array.of(0xfe, n & 0xff, (n >> 8) & 0xff, (n >> 16) & 0xff, n >>> 24);
+}
+
+const MESSAGE_PREFIX = utf8ToBytes("\x18Bitcoin Signed Message:\n");
+
+/**
+ * The hash an Electrum / BIP-137 message signature commits to:
+ * sha256d("\x18Bitcoin Signed Message:\n" || varint(len(msg)) || msg).
+ */
+function magicHash(message) {
+  const msg = utf8ToBytes(message);
+  return sha256(sha256(concatBytes(MESSAGE_PREFIX, encodeVarint(msg.length), msg)));
+}
 
 /**
  * Detects the Bitcoin network from an extended public key prefix.
@@ -136,7 +164,7 @@ function deriveAddress(xpub, relativePath, addressType = ADDRESS_TYPES.legacy) {
 
   return {
     address: payment.address,
-    publicKey: publicKey.toString("hex"),
+    publicKey: bytesToHex(publicKey),
   };
 }
 
@@ -147,7 +175,7 @@ function deriveAddress(xpub, relativePath, addressType = ADDRESS_TYPES.legacy) {
  */
 function derivePublicKey(xpub, relativePath) {
   const derived = deriveFromPath(xpub, relativePath);
-  return derived.publicKey.toString("hex");
+  return bytesToHex(derived.publicKey);
 }
 
 /**
@@ -158,7 +186,12 @@ function derivePublicKey(xpub, relativePath) {
  * recovery is script-type agnostic.
  */
 function recoverPublicKey(message, signature) {
-  const buf = Buffer.from(signature, "base64");
+  let buf;
+  try {
+    buf = base64ToBytes(signature);
+  } catch (e) {
+    throw new Error("Signature is not valid base64.");
+  }
   if (buf.length !== 65) {
     throw new Error(
       "Public-key verification expects a 65-byte recoverable ECDSA signature (Electrum or BIP-137)."
@@ -169,13 +202,13 @@ function recoverPublicKey(message, signature) {
     throw new Error(`Unexpected signature header byte: ${header}.`);
   }
   const recoveryId = (header - 27) & 3;
-  const hash = bitcoinMessage.magicHash(message);
-  const compactSig = Uint8Array.prototype.slice.call(buf, 1);
+  const hash = magicHash(message);
+  const compactSig = buf.slice(1);
   const recovered = ecc.recover(hash, compactSig, recoveryId, true);
   if (!recovered) {
     throw new Error("Could not recover a public key from this signature.");
   }
-  return Buffer.from(recovered).toString("hex");
+  return bytesToHex(recovered);
 }
 
 /**
@@ -202,27 +235,14 @@ function validateSignatureAgainstPubkey(
 /**
  * Validates a Bitcoin signed message using the specified format.
  *
- * - Electrum/BIP-137: Use bitcoinjs-message for legacy, bip322-js for segwit
- * - BIP-322: Use bip322-js for all address types
+ * All formats go through bip322-js. For Electrum/BIP-137 it recovers the key
+ * and compares derived addresses; BIP-137 additionally checks the header byte.
  */
 function validateSignature(message, signature, address, signatureFormat) {
-  const detectedType = detectAddressType(address);
-
-  // BIP-322 format - use bip322-js for all address types
   if (signatureFormat === SIGNATURE_FORMATS.bip322) {
     return Verifier.verifySignature(address, message, signature);
   }
 
-  // For legacy addresses, use bitcoinjs-message
-  if (detectedType === ADDRESS_TYPES.legacy) {
-    try {
-      return bitcoinMessage.verify(message, address, signature);
-    } catch (error) {
-      throw new Error(`Legacy verification failed: ${error.message}`);
-    }
-  }
-
-  // For SegWit and wrapped SegWit, use bip322-js
   // BIP-137 uses strict mode, Electrum uses loose mode
   const strictMode = signatureFormat === SIGNATURE_FORMATS.bip137;
   const isValid = Verifier.verifySignature(address, message, signature, strictMode);
@@ -248,7 +268,7 @@ const ECDSA_FORMATS = [SIGNATURE_FORMATS.electrum, SIGNATURE_FORMATS.bip137];
  */
 function detectSignatureFormat(signature) {
   try {
-    const buf = Buffer.from(signature, "base64");
+    const buf = base64ToBytes(signature);
     if (buf.length === 65) {
       const header = buf[0];
       if (header >= 27 && header <= 42) {
