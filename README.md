@@ -47,7 +47,7 @@ Useful for onboarding a new multisig, periodic key-liveness checks, inheritance/
 ### Compatibility notes
 
 - **Taproot** uses Schnorr signatures (BIP-340); standard ECDSA message signing does not apply. Taproot verification requires the **BIP-322** format.
-- Legacy addresses are verified with `bitcoinjs-message`; SegWit and BIP-322 signatures use `bip322-js`.
+- All signature formats (Electrum, BIP-137, BIP-322) are verified with `bip322-js`, for every address type.
 - Works with descriptors from Sparrow, Coldcard, SeedSigner, Nunchuk, and other coordinators. In-app help covers exporting the descriptor and signing a message for each.
 
 ## Privacy & security
@@ -79,12 +79,12 @@ Open the printed URL. To run offline, load `index.html` after building.
 
 ## Tech stack
 
-Plain JavaScript, bundled with [browserify](https://browserify.org/) — no framework, no runtime dependencies beyond the crypto libraries.
+Plain JavaScript, bundled with [esbuild](https://esbuild.github.io/) — no framework, no runtime dependencies beyond the crypto libraries.
 
 - [bitcoinjs-lib](https://github.com/bitcoinjs/bitcoinjs-lib) — address derivation
 - [bip32](https://github.com/bitcoinjs/bip32) + [@bitcoinerlab/secp256k1](https://github.com/bitcoinerlab/secp256k1) — key derivation
-- [bitcoinjs-message](https://github.com/bitcoinjs/bitcoinjs-message) — legacy signed-message verification
-- [bip322-js](https://github.com/ACken2/bip322-js) — BIP-322 / SegWit verification
+- [bip322-js](https://github.com/ACken2/bip322-js) — signed-message verification (Electrum, BIP-137, BIP-322)
+- [@noble/hashes](https://github.com/paulmillr/noble-hashes) — message hashing for public-key recovery
 - [qrcode](https://github.com/soldair/node-qrcode) + [html5-qrcode](https://github.com/mebjas/html5-qrcode) — QR generation and scanning
 
 Fonts (Geist Sans + Geist Mono) and icons ([Font Awesome Free](https://fontawesome.com), CC BY 4.0) are self-hosted; the app makes no third-party requests.
