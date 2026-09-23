@@ -99,13 +99,15 @@ icons.css                   generated icon masks (scripts/build-icons.js)
 main.js                     entry point
 modules/                    UI, file/QR handling, multisig operations
 bitcoin-utils.js            derivation & signature verification
-bundled.js                  committed browserify bundle (built artifact)
+bundled.js                  committed esbuild bundle (built artifact)
 fonts/                      self-hosted Geist woff2 files
 ```
 
 ## Deploying
 
-Gatekeeper is a static site — commit the built `bundled.js` and serve the repository root with any static host (Caddy `file_server`, Nginx, GitHub Pages, Netlify, etc.). No server-side build or runtime is required.
+Gatekeeper is a static site with no server-side build or runtime. Commit the built files, then publish only what the page loads: `index.html`, `theme-init.js`, `icons.css`, `style.css`, `bundled.js` and `fonts/`. Any static host works (Caddy `file_server`, Nginx, GitHub Pages, Netlify, etc.).
+
+Avoid serving the repository root directly, since that also exposes `.git` and the sources. `scripts/deploy.sh` does this for you. Run it from a checkout kept outside the web root: it pulls `main`, refuses to deploy if an `index.html` asset hash doesn't match its file, then mirrors just those files into the web root (default `/srv/docker/caddy/sites/gatekeeper`) and deletes anything else there. When the page starts loading a new file, add it to `FILES` in the script.
 
 ## Contributing
 
